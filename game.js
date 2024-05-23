@@ -4,76 +4,80 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
+class Axis extends Shape {
+    constructor() {
+        super("position", "normal");
+        this.arrays.position = Vector3.cast(
+            [0,0,0], [10,0,0], 
+            [0,0,0], [0,10,0], 
+            [0,0,0], [0,0,10]
+        );
+        this.arrays.color = [
+            vec4(1,0,0,1), vec4(1,0,0,1),
+            vec4(0,1,0,1), vec4(0,1,0,1),
+            vec4(0,0,1,1), vec4(0,0,1,1)
+        ];
+        this.indices = false;
+    }
+}
+
+class Bullet {
+    constructor(x, y, rot) {
+        this.x = x;
+        this.y = y;
+        this.z = -5;
+        this.rot = rot;
+        this.v = 3.0;
+        this.life = 480;
+    }
+}
+
 export class Game extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
+        // player 1 bullets 
+        this.p1_bullets = [];
+        this.p1_bullet_cnt = 5;
+
+        this.shootBulletp1 = (x, y, rot) => {
+            if (this.p1_bullet_cnt != 0) {
+                this.p1_bullets.push(new Bullet(x, y, rot));
+                this.p1_bullet_cnt -= 1;
+            }
+        }
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            torus: new defs.Torus(15, 15),
-            torus2: new defs.Torus(3, 15),
-            sphere: new defs.Subdivision_Sphere(4),
-            circle: new defs.Regular_2D_Polygon(1, 15),
-            // TODO:  Fill in as many additional shape instances as needed in this key/value table.
-            sun: new defs.Subdivision_Sphere(4),
-            planet1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
-            planet2: new defs.Subdivision_Sphere(3),
-            planet3: new defs.Subdivision_Sphere(4),
-            ring: new defs.Torus(50, 50),
-            planet4: new defs.Subdivision_Sphere(4),
-            moon: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1)
-            //        (Requirement 1)
+            'axis': new Axis(),
+            bullet: new defs.Subdivision_Sphere(4),
+            
         };
 
         // *** Materials
+        this.white = new Material(new defs.Basic_Shader());
+
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             test2: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
 
-            sun: new Material(new defs.Phong_Shader(), 
-                {ambient: 1, diffusivity: 1, color: hex_color('#ffffff')}),
-            // do I need specularity for planet1?    
-            planet1: new Material(new defs.Phong_Shader(), 
-            {ambient: 0, diffusivity: 1, color: hex_color('#808080')}),
+            bullet: new Material(new defs.Phong_Shader(), 
+            {ambient: 0.8, diffusivity: 1, color: hex_color('#0000FF'), specularity: 1, smoothness: 30}),
 
-            planet2_g: new Material(new Gouraud_Shader(), 
-            {ambient: 0, diffusivity: 0.2, color: hex_color('#80FFFF'), specularity: 1}),
-
-            planet2_ph: new Material(new defs.Phong_Shader(), 
-            {ambient: 0, diffusivity: 0.2, color: hex_color('#80FFFF'), specularity: 1}),
-
-            planet3: new Material(new defs.Phong_Shader(), 
-            {ambient: 0, diffusivity: 1, color: hex_color('#B08040'), specularity: 1}),
-
-            ring: new Material(new Ring_Shader(),
-            {ambient: 1, diffusivity: 0, color: hex_color('#B08040'), specularity: 0}),
-
-            planet4: new Material(new defs.Phong_Shader(), 
-            {ambient: 0, diffusivity: 1, color: hex_color('#0000FF'), specularity: 1, smoothness: 30}),
-
-            moon: new Material(new defs.Phong_Shader(), 
-            {ambient: 0, diffusivity: 1, color: hex_color('#BF40BF'), specularity: 1}), 
-            // TODO:  Fill in as many additional material objects as needed in this key/value table.
-            //        (Requirement 4)
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 30), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => this.initial_camera_location);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        
+                                                                                // replace the x, y and rotation with player1's coordinates and rotation
+        this.key_triggered_button("Shoot bullet", ["g"], () => this.shootBulletp1(0, 0, 45));
+        // this.new_line();
     }
 
     display(context, program_state) {
@@ -91,60 +95,34 @@ export class Game extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         let model_transform = Mat4.identity();
-
-        let sun_transform = model_transform;
-        var sun_rad = Math.sin((Math.PI/5)*t - Math.PI/2) + 2;
-        sun_transform = sun_transform.times(Mat4.scale(sun_rad, sun_rad, sun_rad));
-
-        // red (255, 0, 0)  white(255, 255, 255)
-        let sun_col_change = (Math.sin((Math.PI/5)*t - Math.PI/2) + 1)/2;
-        var sun_color = color(1, sun_col_change, sun_col_change, 1);
-
-        // TODO: Lighting (Requirement 2)
-        const light_position = vec4(0, 0, 0, 1);
-        // The parameters of the Light are: position, color, size
-        program_state.lights = [new Light(light_position, sun_color, 10**sun_rad)]; 
-
-        this.shapes.sun.draw(context, program_state, sun_transform, this.materials.sun.override({color: sun_color}));
-
-        // TODO: Create Planets (Requirement 1)
-        // Planet 1
-        let p1_transform = model_transform;
-        p1_transform = p1_transform.times(Mat4.rotation(t, 0, 1, 0)).times(Mat4.translation(5,0,0));
-        this.shapes.planet1.draw(context, program_state, p1_transform, this.materials.planet1);
-
-        // Planet 2
-        let p2_transform = model_transform;
-        let time = Math.floor(t % 2);
-        p2_transform = p2_transform.times(Mat4.rotation(0.8*t, 0, 1, 0)).times(Mat4.translation(9,0,0));
-        if (time == 0)
-            this.shapes.planet2.draw(context, program_state, p2_transform, this.materials.planet2_g);
-        else
-            this.shapes.planet2.draw(context, program_state, p2_transform, this.materials.planet2_ph);
-
-        // Planet 3
-        let p3_transform = model_transform;
-        p3_transform = p3_transform.times(Mat4.rotation(0.5*t, 0, 1, 0)).times(Mat4.translation(13,0,0)).times(Mat4.rotation(0.7*t, 1, 0, 0));
-        this.shapes.planet3.draw(context, program_state, p3_transform, this.materials.planet3);
-
-        let ring_transform = p3_transform.times(Mat4.scale(3.5, 3.5, 0.1));
-        this.shapes.ring.draw(context, program_state, ring_transform, this.materials.ring);
-
-        // Planet 4
-        let p4_transform = model_transform;
-        p4_transform = p4_transform.times(Mat4.rotation(0.4*t, 0, 1, 0)).times(Mat4.translation(17,0,0));
-        this.shapes.planet4.draw(context, program_state, p4_transform, this.materials.planet4);
-
-        let moon_transform = p4_transform;
-        moon_transform = moon_transform.times(Mat4.rotation(0.4*t, 0, 1, 0)).times(Mat4.translation(2,0,0));
-        this.shapes.moon.draw(context, program_state, moon_transform, this.materials.moon);
-        // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
         
-        this.planet_1 = Mat4.inverse(p1_transform.times(Mat4.translation(0, 0, 5)));
-        this.planet_2 = Mat4.inverse(p2_transform.times(Mat4.translation(0, 0, 5)));
-        this.planet_3 = Mat4.inverse(p3_transform.times(Mat4.translation(0, 0, 5)));
-        this.planet_4 = Mat4.inverse(p4_transform.times(Mat4.translation(0, 0, 5)));
-        this.moon = Mat4.inverse(moon_transform.times(Mat4.translation(0, 0, 5)));
+        // drawing axis for reference
+        this.shapes.axis.draw(context, program_state, model_transform, this.white, "LINES");
+        
+        // manipulating light
+        const light_position = vec4(0, 0, 0, 1);
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)]; 
+
+
+
+        // draw the bullets for p1
+        for(let i = 0; i < this.p1_bullets.length; i++) {
+            let curBullet = this.p1_bullets[i];
+            curBullet.x = curBullet.x + (Math.cos(curBullet.rot * Math.PI/180) * curBullet.v*dt);
+            curBullet.y = curBullet.y + (Math.sin(curBullet.rot * Math.PI/180) * curBullet.v*dt);
+            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(0.5, 0.5, 0.5));
+            this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
+        }
+        // bullets disappear after couple of seconds
+        for(let i = 0; i < this.p1_bullets.length; i++) {
+            let curBullet = this.p1_bullets[i];
+            curBullet.life -= 1;
+            if (curBullet.life == 0) {
+                this.p1_bullets.splice(i, 1);
+                this.p1_bullet_cnt += 1;
+            }   
+        }
+
 
         if (this.attached != undefined) {
             program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1))
