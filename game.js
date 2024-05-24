@@ -32,6 +32,22 @@ class Bullet {
     }
 }
 
+class background extends Shape { //triangle strip cubes for walls and ground
+    constructor() {
+        super("position", "normal");
+        this.arrays.position = Vector3.cast(
+            [-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, 1, 1], [-1, 1, 1],
+            [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1], [1, -1, 1], [1, -1, -1], [1, 1, 1], [1, 1, -1],
+            [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1], [1, -1, -1], [-1, -1, -1], [1, 1, -1], [-1, 1, -1]);
+        this.arrays.normal = Vector3.cast(
+            [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0],
+            [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0],
+            [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, -1], [0, 0, -1], [0, 0, -1], [0, 0, -1]);
+        this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
+                14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+    }
+}
+
 export class Game extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -40,6 +56,20 @@ export class Game extends Scene {
         // player 1 bullets 
         this.p1_bullets = [];
         this.p1_bullet_cnt = 5;
+
+        var mazes = [];
+        const outline = [0,7,14,21,28,35,  42,43,44,45,46,47,  6,13,20,27,34,41, 78,79,80,81,82,83];
+        this.walls_to_add = outline;
+        for (let i = 0; i<30; i++){
+            this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 77))
+        }
+
+        this.generate_walls = () => {
+            this.walls_to_add = outline;
+            for (let i = 0; i<30; i++){
+                this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 77))
+            }
+        }
 
         this.shootBulletp1 = (x, y, rot) => {
             if (this.p1_bullet_cnt != 0) {
@@ -52,7 +82,8 @@ export class Game extends Scene {
         this.shapes = {
             'axis': new Axis(),
             bullet: new defs.Subdivision_Sphere(4),
-            
+            floor: new background(),
+            border: new background(),
         };
 
         // *** Materials
@@ -63,13 +94,17 @@ export class Game extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
             test2: new Material(new Gouraud_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
-
+            
+            ground: new Material(new Gouraud_Shader(),
+                {ambient: 0.5, diffusivity: 0.6, color: hex_color("#9B7653")}),
+            wall: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.6, color: hex_color("#C3C3C3")}),
             bullet: new Material(new defs.Phong_Shader(), 
             {ambient: 0.8, diffusivity: 1, color: hex_color('#0000FF'), specularity: 1, smoothness: 30}),
 
         }
-
-        this.initial_camera_location = Mat4.look_at(vec3(0, 0, 30), vec3(0, 0, 0), vec3(0, 1, 0));
+        // changed camera angle to be more perspective - Nathan
+        this.initial_camera_location = Mat4.look_at(vec3(0, 5, 80), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -77,6 +112,7 @@ export class Game extends Scene {
         
                                                                                 // replace the x, y and rotation with player1's coordinates and rotation
         this.key_triggered_button("Shoot bullet", ["g"], () => this.shootBulletp1(0, 0, 45));
+        this.key_triggered_button("Generate map", ["m"], () => this.generate_walls()); //eventually change to random variable - Nathan
         // this.new_line();
     }
 
@@ -100,10 +136,48 @@ export class Game extends Scene {
         this.shapes.axis.draw(context, program_state, model_transform, this.white, "LINES");
         
         // manipulating light
-        const light_position = vec4(0, 0, 0, 1);
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)]; 
+        const light_position = vec4(0, 0, 20, 1); //changed to be higher - Nathan
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 5000)]; //changed to be a little brighter - Nathan 
 
+        // generate ground for the stage - Nathan
+        let floor_transform = Mat4.scale(24.0,24.0,0.2).times(Mat4.translation(0, 0, -1.0));
+        this.shapes.floor.draw(context, program_state, floor_transform, this.materials.ground);
 
+        // generate a couple walls for the stage - Nathan
+        const wall_transform = []
+        var wall_index = 0;
+
+        /*
+        for (let y = -2; y<4; y++){
+            for (let x = -3; x<4; x++){
+                wall_transform[wall_index] = Mat4.translation(8*x, 0, 8*y).times(Mat4.rotation(Math.PI/2,0,1,0)).times(Mat4.scale(4.0,2.0,0.25)).times(Mat4.translation(1, 0, 0));
+                wall_index++;
+            }
+        }
+        for (let y = -3; y<4; y++){
+            for (let x = -3; x<3; x++){
+                wall_transform[wall_index] = Mat4.translation(8*x, 0, 8*y).times(Mat4.scale(4.0,2.0,0.25)).times(Mat4.translation(1, 0, 0));
+                wall_index++;
+            }
+        }
+        */
+        for (let y = -3; y<3; y++){
+            for (let x = -3; x<4; x++){
+                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
+                wall_index++;
+            }
+        }
+        for (let y = -3; y<4; y++){
+            for (let x = -3; x<3; x++){
+                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
+                wall_index++;
+            }
+        }
+        for (let i = 0; i<this.walls_to_add.length; i++){
+            this.shapes.border.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
+        }
+        
+        
 
         // draw the bullets for p1
         for(let i = 0; i < this.p1_bullets.length; i++) {
