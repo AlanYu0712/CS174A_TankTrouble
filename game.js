@@ -48,14 +48,29 @@ class background extends Shape { //triangle strip cubes for walls and ground
     }
 }
 
+const Flat_Shaded_Cube = defs.Flat_Shaded_Cube =
+    class Flat_Shaded_Cube extends (defs.Cube.prototype.make_flat_shaded_version()) {}
+
 export class Game extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
-        // player 1 bullets 
+        // Tank Speed
+        this.tank_move_speed = 0.1;
+        this. tank_rot_speed = 0.02;
+
+        // player 1  
         this.p1_bullets = [];
         this.p1_bullet_cnt = 5;
+        this.p1_move_forward = this.p1_move_backward=this.p1_rot_left=this.p1_rot_right = false;
+
+        this.p1_position = Mat4.identity();
+
+        // player 2  
+        this.p2_move_forward = this.p2_move_backward=this.p2_rot_left=this.p2_rot_right = false;
+
+        this.p2_position = Mat4.identity();
 
         var mazes = [];
         const outline = [0,7,14,21,28,35,  42,43,44,45,46,47,  6,13,20,27,34,41, 78,79,80,81,82,83];
@@ -78,12 +93,16 @@ export class Game extends Scene {
             }
         }
 
+        this.forwardTank = 
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'axis': new Axis(),
             bullet: new defs.Subdivision_Sphere(4),
             floor: new background(),
             border: new background(),
+            p1_tank: new defs.Flat_Shaded_Cube(),
+            p2_tank: new defs.Flat_Shaded_Cube(),
         };
 
         // *** Materials
@@ -101,6 +120,8 @@ export class Game extends Scene {
                 {ambient: 0.5, diffusivity: 0.6, color: hex_color("#C3C3C3")}),
             bullet: new Material(new defs.Phong_Shader(), 
             {ambient: 0.8, diffusivity: 1, color: hex_color('#0000FF'), specularity: 1, smoothness: 30}),
+            tank_mat: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#1a9ffa")}),
 
         }
         // changed camera angle to be more perspective - Nathan
@@ -113,6 +134,20 @@ export class Game extends Scene {
                                                                                 // replace the x, y and rotation with player1's coordinates and rotation
         this.key_triggered_button("Shoot bullet", ["g"], () => this.shootBulletp1(0, 0, 45));
         this.key_triggered_button("Generate map", ["m"], () => this.generate_walls()); //eventually change to random variable - Nathan
+        
+        //P1
+        this.key_triggered_button("P1 Tank Forward", ["w"], ()=>{this.p1_move_forward = true},undefined,()=>{this.p1_move_forward=false});
+        this.key_triggered_button("P1 Tank Backward", ["s"], ()=>{this.p1_move_backward = true},undefined,()=>{this.p1_move_backward=false});
+        this.key_triggered_button("P1 Tank Rotate Left", ["a"], ()=>{this.p1_rot_left = true},undefined,()=>{this.p1_rot_left=false});
+        this.key_triggered_button("P1 Tank Rotate Right", ["d"], ()=>{this.p1_rot_right = true},undefined,()=>{this.p1_rot_right=false});
+        
+        //P2
+        this.key_triggered_button("P2 Tank Forward", ["o"], ()=>{this.p2_move_forward = true},undefined,()=>{this.p2_move_forward=false});
+        this.key_triggered_button("P2 Tank Backward", ["l"], ()=>{this.p2_move_backward = true},undefined,()=>{this.p2_move_backward=false});
+        this.key_triggered_button("P2 Tank Rotate Left", ["k"], ()=>{this.p2_rot_left = true},undefined,()=>{this.p2_rot_left=false});
+        this.key_triggered_button("P2 Tank Rotate Right", [";"], ()=>{this.p2_rot_right = true},undefined,()=>{this.p2_rot_right=false});
+
+        
         // this.new_line();
     }
 
@@ -201,6 +236,35 @@ export class Game extends Scene {
         if (this.attached != undefined) {
             program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1))
         }
+
+
+        //TANK
+        //Tank P1
+        if (this.p1_move_forward){
+            this.p1_position = this.p1_position.times(Mat4.translation(this.tank_move_speed,0,0));
+        }else if (this.p1_move_backward){
+            this.p1_position = this.p1_position.times(Mat4.translation(-this.tank_move_speed,0,0));
+        } 
+        if (this.p1_rot_left){
+            this.p1_position = this.p1_position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+        }else if (this.p1_rot_right){
+            this.p1_position = this.p1_position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+        }
+        this.shapes.p1_tank.draw(context, program_state, this.p1_position, this.materials.tank_mat);
+
+
+        //Tank P2
+        if (this.p2_move_forward){
+            this.p2_position = this.p2_position.times(Mat4.translation(this.tank_move_speed,0,0));
+        }else if (this.p2_move_backward){
+            this.p2_position = this.p2_position.times(Mat4.translation(-this.tank_move_speed,0,0));
+        } 
+        if (this.p2_rot_left){
+            this.p2_position = this.p2_position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+        }else if (this.p2_rot_right){
+            this.p2_position = this.p2_position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+        }
+        this.shapes.p2_tank.draw(context, program_state, this.p2_position, this.materials.tank_mat.override({color: hex_color("#FF0000")}));
     }
 }
 
