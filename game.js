@@ -32,6 +32,39 @@ class Bullet {
     }
 }
 
+class Tank extends Shape{
+    constructor(position){
+        super("position", "normal",);
+        // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
+        this.arrays.position = Vector3.cast(
+            [-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, 1, 1], [-1, 1, 1],
+            [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1], [1, -1, 1], [1, -1, -1], [1, 1, 1], [1, 1, -1],
+            [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1], [1, -1, -1], [-1, -1, -1], [1, 1, -1], [-1, 1, -1]);
+        this.arrays.normal = Vector3.cast(
+            [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0],
+            [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0],
+            [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, -1], [0, 0, -1], [0, 0, -1], [0, 0, -1]);
+        // Arrange the vertices into a square shape in texture space too:
+        this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
+            14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+
+
+        this.position = position;
+    }
+
+    get x() {
+        return this.position[0][3];
+      }
+    
+    get y() {
+        return this.position[1][3];
+      }
+    
+    get r() {
+        return Math.atan2(this.position[1][0],this.position[0][0])
+    }
+}
+
 class background extends Shape { //triangle strip cubes for walls and ground
     constructor() {
         super("position", "normal");
@@ -65,12 +98,9 @@ export class Game extends Scene {
         this.p1_bullet_cnt = 5;
         this.p1_move_forward = this.p1_move_backward=this.p1_rot_left=this.p1_rot_right = false;
 
-        this.p1_position = Mat4.identity();
 
         // player 2  
         this.p2_move_forward = this.p2_move_backward=this.p2_rot_left=this.p2_rot_right = false;
-
-        this.p2_position = Mat4.identity();
 
         var mazes = [];
         const outline = [0,7,14,21,28,35,  42,43,44,45,46,47,  6,13,20,27,34,41, 78,79,80,81,82,83];
@@ -101,8 +131,8 @@ export class Game extends Scene {
             bullet: new defs.Subdivision_Sphere(4),
             floor: new background(),
             border: new background(),
-            p1_tank: new defs.Flat_Shaded_Cube(),
-            p2_tank: new defs.Flat_Shaded_Cube(),
+            p1: new Tank(Mat4.identity()),
+            p2: new Tank(Mat4.identity()),
         };
 
         // *** Materials
@@ -241,32 +271,63 @@ export class Game extends Scene {
         //TANK
         //Tank P1
         if (this.p1_move_forward){
-            this.p1_position = this.p1_position.times(Mat4.translation(this.tank_move_speed,0,0));
+            this.shapes.p1.position = this.shapes.p1.position.times(Mat4.translation(this.tank_move_speed,0,0));
         }else if (this.p1_move_backward){
-            this.p1_position = this.p1_position.times(Mat4.translation(-this.tank_move_speed,0,0));
+            this.shapes.p1.position = this.shapes.p1.position.times(Mat4.translation(-this.tank_move_speed,0,0));
         } 
         if (this.p1_rot_left){
-            this.p1_position = this.p1_position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+            this.shapes.p1.position = this.shapes.p1.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
         }else if (this.p1_rot_right){
-            this.p1_position = this.p1_position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+            this.shapes.p1.position = this.shapes.p1.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
         }
-        this.shapes.p1_tank.draw(context, program_state, this.p1_position, this.materials.tank_mat);
+        this.shapes.p1.draw(context, program_state, this.shapes.p1.position, this.materials.tank_mat);
+        // console.log("x: "+this.shapes.p1.x);
+        // console.log("y: "+this.shapes.p1.y);
+        // console.log("r: "+this.shapes.p1.r);
 
 
         //Tank P2
         if (this.p2_move_forward){
-            this.p2_position = this.p2_position.times(Mat4.translation(this.tank_move_speed,0,0));
+            this.shapes.p2.position = this.shapes.p2.position.times(Mat4.translation(this.tank_move_speed,0,0));
         }else if (this.p2_move_backward){
-            this.p2_position = this.p2_position.times(Mat4.translation(-this.tank_move_speed,0,0));
+            this.shapes.p2.position = this.shapes.p2.position.times(Mat4.translation(-this.tank_move_speed,0,0));
         } 
         if (this.p2_rot_left){
-            this.p2_position = this.p2_position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+            this.shapes.p2.position = this.shapes.p2.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
         }else if (this.p2_rot_right){
-            this.p2_position = this.p2_position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+            this.shapes.p2.position = this.shapes.p2.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
         }
-        this.shapes.p2_tank.draw(context, program_state, this.p2_position, this.materials.tank_mat.override({color: hex_color("#FF0000")}));
+        this.shapes.p2.draw(context, program_state, this.shapes.p2.position, this.materials.tank_mat.override({color: hex_color("#FF0000")}));
+        // console.log("x: "+this.shapes.p2.x);
+        // console.log("y: "+this.shapes.p2.y);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Gouraud_Shader extends Shader {
     // This is a Shader using Phong_Shader as template
