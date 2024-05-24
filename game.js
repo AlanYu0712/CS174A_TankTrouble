@@ -27,8 +27,8 @@ class Bullet {
         this.y = y;
         this.z = -5;
         this.rot = rot;
-        this.v = 3.0;
-        this.life = 480;
+        this.v = 7.0;
+        this.life = 150;
     }
 }
 
@@ -65,7 +65,7 @@ class Tank extends Shape{
     }
 }
 
-class background extends Shape { //triangle strip cubes for walls and ground
+class Background extends Shape { //triangle strip cubes for walls and ground
     constructor() {
         super("position", "normal");
         this.arrays.position = Vector3.cast(
@@ -88,19 +88,27 @@ export class Game extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-
+        
         // Tank Speed
         this.tank_move_speed = 0.1;
-        this. tank_rot_speed = 0.02;
+        this.tank_rot_speed = 0.02;
 
         // player 1  
         this.p1_bullets = [];
         this.p1_bullet_cnt = 5;
-        this.p1_move_forward = this.p1_move_backward=this.p1_rot_left=this.p1_rot_right = false;
+        this.p1_move_forward = this.p1_move_backward = this.p1_rot_left = this.p1_rot_right = false;
+        this.p1_x = 0;
+        this.p1_y = 0;
+        this.p1_rot = 0;
 
 
         // player 2  
+        this.p2_bullets = [];
+        this.p2_bullet_cnt = 5;
         this.p2_move_forward = this.p2_move_backward=this.p2_rot_left=this.p2_rot_right = false;
+        this.p2_x = 0;
+        this.p2_y = 0;
+        this.p2_rot = 0;
 
         var mazes = [];
         const outline = [0,7,14,21,28,35,  42,43,44,45,46,47,  6,13,20,27,34,41, 78,79,80,81,82,83];
@@ -123,16 +131,22 @@ export class Game extends Scene {
             }
         }
 
-        this.forwardTank = 
+        this.shootBulletp2 = (x, y, rot) => {
+            if (this.p2_bullet_cnt != 0) {
+                this.p2_bullets.push(new Bullet(x, y, rot));
+                this.p2_bullet_cnt -= 1;
+            }
+        }
+
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'axis': new Axis(),
             bullet: new defs.Subdivision_Sphere(4),
-            floor: new background(),
-            border: new background(),
-            p1: new Tank(Mat4.identity()),
-            p2: new Tank(Mat4.identity()),
+            floor: new Background(),
+            border: new Background(),
+            p1: new Tank(Mat4.identity().times(Mat4.translation(5, 10, 1))),
+            p2: new Tank(Mat4.identity().times(Mat4.translation(-6, -8, 1))),
         };
 
         // *** Materials
@@ -146,23 +160,25 @@ export class Game extends Scene {
             
             ground: new Material(new Gouraud_Shader(),
                 {ambient: 0.5, diffusivity: 0.6, color: hex_color("#9B7653")}),
+
             wall: new Material(new defs.Phong_Shader(),
                 {ambient: 0.5, diffusivity: 0.6, color: hex_color("#C3C3C3")}),
-            bullet: new Material(new defs.Phong_Shader(), 
-            {ambient: 0.8, diffusivity: 1, color: hex_color('#0000FF'), specularity: 1, smoothness: 30}),
-            tank_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#1a9ffa")}),
 
+            bullet: new Material(new defs.Phong_Shader(), 
+            {ambient: 0.8, diffusivity: 1, color: hex_color('#000000'), specularity: 1, smoothness: 30}),
+
+            tank1_mat: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#1a9ffa"), specularity: 0}),
+            
+            tank2_mat: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#FF0000"), specularity: 0}),
         }
         // changed camera angle to be more perspective - Nathan
-        this.initial_camera_location = Mat4.look_at(vec3(0, 5, 80), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, -15, 80), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        
-                                                                                // replace the x, y and rotation with player1's coordinates and rotation
-        this.key_triggered_button("Shoot bullet", ["g"], () => this.shootBulletp1(0, 0, 45));
+        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.                                                                      
         this.key_triggered_button("Generate map", ["m"], () => this.generate_walls()); //eventually change to random variable - Nathan
         
         //P1
@@ -170,12 +186,16 @@ export class Game extends Scene {
         this.key_triggered_button("P1 Tank Backward", ["s"], ()=>{this.p1_move_backward = true},undefined,()=>{this.p1_move_backward=false});
         this.key_triggered_button("P1 Tank Rotate Left", ["a"], ()=>{this.p1_rot_left = true},undefined,()=>{this.p1_rot_left=false});
         this.key_triggered_button("P1 Tank Rotate Right", ["d"], ()=>{this.p1_rot_right = true},undefined,()=>{this.p1_rot_right=false});
+        this.key_triggered_button("P1 Shoot bullet", ["v"], () => this.shootBulletp1(this.p1_x, this.p1_y, this.p1_rot));
         
+        this.new_line();
+
         //P2
         this.key_triggered_button("P2 Tank Forward", ["o"], ()=>{this.p2_move_forward = true},undefined,()=>{this.p2_move_forward=false});
         this.key_triggered_button("P2 Tank Backward", ["l"], ()=>{this.p2_move_backward = true},undefined,()=>{this.p2_move_backward=false});
         this.key_triggered_button("P2 Tank Rotate Left", ["k"], ()=>{this.p2_rot_left = true},undefined,()=>{this.p2_rot_left=false});
         this.key_triggered_button("P2 Tank Rotate Right", [";"], ()=>{this.p2_rot_right = true},undefined,()=>{this.p2_rot_right=false});
+        this.key_triggered_button("P2 Shoot bullet", ["n"], () => this.shootBulletp2(this.p2_x, this.p2_y, this.p2_rot));
 
         
         // this.new_line();
@@ -198,7 +218,7 @@ export class Game extends Scene {
         let model_transform = Mat4.identity();
         
         // drawing axis for reference
-        this.shapes.axis.draw(context, program_state, model_transform, this.white, "LINES");
+        // this.shapes.axis.draw(context, program_state, model_transform, this.white, "LINES");
         
         // manipulating light
         const light_position = vec4(0, 0, 20, 1); //changed to be higher - Nathan
@@ -242,31 +262,6 @@ export class Game extends Scene {
             this.shapes.border.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
         }
         
-        
-
-        // draw the bullets for p1
-        for(let i = 0; i < this.p1_bullets.length; i++) {
-            let curBullet = this.p1_bullets[i];
-            curBullet.x = curBullet.x + (Math.cos(curBullet.rot * Math.PI/180) * curBullet.v*dt);
-            curBullet.y = curBullet.y + (Math.sin(curBullet.rot * Math.PI/180) * curBullet.v*dt);
-            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(0.5, 0.5, 0.5));
-            this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
-        }
-        // bullets disappear after couple of seconds
-        for(let i = 0; i < this.p1_bullets.length; i++) {
-            let curBullet = this.p1_bullets[i];
-            curBullet.life -= 1;
-            if (curBullet.life == 0) {
-                this.p1_bullets.splice(i, 1);
-                this.p1_bullet_cnt += 1;
-            }   
-        }
-
-
-        if (this.attached != undefined) {
-            program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1))
-        }
-
 
         //TANK
         //Tank P1
@@ -280,10 +275,10 @@ export class Game extends Scene {
         }else if (this.p1_rot_right){
             this.shapes.p1.position = this.shapes.p1.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
         }
-        this.shapes.p1.draw(context, program_state, this.shapes.p1.position, this.materials.tank_mat);
-        // console.log("x: "+this.shapes.p1.x);
-        // console.log("y: "+this.shapes.p1.y);
-        // console.log("r: "+this.shapes.p1.r);
+        this.shapes.p1.draw(context, program_state, this.shapes.p1.position, this.materials.tank1_mat);
+        this.p1_x = this.shapes.p1.x;
+        this.p1_y = this.shapes.p1.y;
+        this.p1_rot = this.shapes.p1.r;
 
 
         //Tank P2
@@ -297,36 +292,54 @@ export class Game extends Scene {
         }else if (this.p2_rot_right){
             this.shapes.p2.position = this.shapes.p2.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
         }
-        this.shapes.p2.draw(context, program_state, this.shapes.p2.position, this.materials.tank_mat.override({color: hex_color("#FF0000")}));
-        // console.log("x: "+this.shapes.p2.x);
-        // console.log("y: "+this.shapes.p2.y);
+        this.shapes.p2.draw(context, program_state, this.shapes.p2.position, this.materials.tank2_mat);
+        this.p2_x = this.shapes.p2.x;
+        this.p2_y = this.shapes.p2.y;
+        this.p2_rot = this.shapes.p2.r;
+        
+
+        // draw the bullets for p1
+        for(let i = 0; i < this.p1_bullets.length; i++) {
+            let curBullet = this.p1_bullets[i];
+            curBullet.x = curBullet.x + (Math.cos(curBullet.rot) * curBullet.v*dt);
+            curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
+            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(0.5, 0.5, 0.5));
+            this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
+        }
+        // bullets disappear after couple of seconds
+        for(let i = 0; i < this.p1_bullets.length; i++) {
+            let curBullet = this.p1_bullets[i];
+            curBullet.life -= 1;
+            if (curBullet.life == 0) {
+                this.p1_bullets.splice(i, 1);
+                this.p1_bullet_cnt += 1;
+            }   
+        }
+
+        // draw the bullets for p2
+        for(let i = 0; i < this.p2_bullets.length; i++) {
+            let curBullet = this.p2_bullets[i];
+            curBullet.x = curBullet.x + (Math.cos(curBullet.rot) * curBullet.v*dt);
+            curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
+            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(0.5, 0.5, 0.5));
+            this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
+        }
+        // bullets disappear after couple of seconds
+        for(let i = 0; i < this.p2_bullets.length; i++) {
+            let curBullet = this.p2_bullets[i];
+            curBullet.life -= 1;
+            if (curBullet.life == 0) {
+                this.p2_bullets.splice(i, 1);
+                this.p2_bullet_cnt += 1;
+            }   
+        }
+
+
+        if (this.attached != undefined) {
+            program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1))
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class Gouraud_Shader extends Shader {
