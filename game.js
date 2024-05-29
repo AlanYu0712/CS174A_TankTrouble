@@ -27,8 +27,13 @@ class Bullet {
         this.y = y;
         this.z = -5;
         this.rot = rot;
-        this.v = 7.0;
-        this.life = 150;
+        this.rad = 0.6
+        this.v = 8.0;
+        this.life = 480;
+    }
+
+    change_rot(theta) {
+        this.rot = theta - this.rot;
     }
 }
 
@@ -111,8 +116,11 @@ export class Game extends Scene {
         this.p2_rot = 0;
 
         var mazes = [];
+        this.h_walls = [];
+        this.v_walls = [];
         const outline = [0,7,14,21,28,35,  42,43,44,45,46,47,  6,13,20,27,34,41, 78,79,80,81,82,83];
         this.walls_to_add = outline;
+
         for (let i = 0; i<30; i++){
             this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 77))
         }
@@ -145,7 +153,7 @@ export class Game extends Scene {
             bullet: new defs.Subdivision_Sphere(4),
             floor: new Background(),
             border: new Background(),
-            p1: new Tank(Mat4.identity().times(Mat4.translation(5, 10, 1))),
+            p1: new Tank(Mat4.identity().times(Mat4.translation(-24, -20, 1))),
             p2: new Tank(Mat4.identity().times(Mat4.translation(-6, -8, 1))),
         };
 
@@ -201,6 +209,46 @@ export class Game extends Scene {
         // this.new_line();
     }
 
+    bullet_v_wall_collision(bullet_x, bullet_y, bullet_rad, wall_x, wall_y, wall_size) {
+        // treat the bullet like it has a cube around it
+        let bullet_l = bullet_x - bullet_rad;
+        let bullet_r = bullet_x + bullet_rad;
+        let bullet_t = bullet_y + bullet_rad;
+        let bullet_b = bullet_y - bullet_rad;
+
+        let wall_l = wall_x - wall_size[1];
+        let wall_r = wall_x + wall_size[1];
+        let wall_t = wall_y + wall_size[0];
+        let wall_b = wall_y - wall_size[0];
+
+        return (bullet_l < wall_r && bullet_r > wall_l && bullet_b < wall_t && bullet_t > wall_b);
+    }
+
+    bullet_h_wall_collision(bullet_x, bullet_y, bullet_rad, wall_x, wall_y, wall_size) {
+        // treat the bullet like it has a cube around it
+        let bullet_l = bullet_x - bullet_rad;
+        let bullet_r = bullet_x + bullet_rad;
+        let bullet_t = bullet_y + bullet_rad;
+        let bullet_b = bullet_y - bullet_rad;
+
+        let wall_l = wall_x - wall_size[0];
+        let wall_r = wall_x + wall_size[0];
+        let wall_t = wall_y + wall_size[1];
+        let wall_b = wall_y - wall_size[1];
+
+        return (bullet_l < wall_r && bullet_r > wall_l && bullet_b < wall_t && bullet_t > wall_b);
+    }
+
+    areVectorsEqual(vec1, vec2) {
+        if (vec1.length !== vec2.length) 
+            return false;
+        for (let i = 0; i < vec1.length; i++) {
+          if (vec1[i] !== vec2[i]) 
+            return false;
+        }
+        return true;
+    }
+
     display(context, program_state) {
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
@@ -229,7 +277,9 @@ export class Game extends Scene {
         this.shapes.floor.draw(context, program_state, floor_transform, this.materials.ground);
 
         // generate a couple walls for the stage - Nathan
-        const wall_transform = []
+        const wall_transform = [];
+        this.v_walls = [];
+        this.h_walls = [];
         var wall_index = 0;
 
         /*
@@ -246,12 +296,14 @@ export class Game extends Scene {
             }
         }
         */
+       // 0-41 VERTICAL WALLS
         for (let y = -3; y<3; y++){
             for (let x = -3; x<4; x++){
                 wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
                 wall_index++;
             }
         }
+        // 42-83 HORIZONTAL WALLS
         for (let y = -3; y<4; y++){
             for (let x = -3; x<3; x++){
                 wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
@@ -260,7 +312,22 @@ export class Game extends Scene {
         }
         for (let i = 0; i<this.walls_to_add.length; i++){
             this.shapes.border.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
+
+            let transform = wall_transform[this.walls_to_add[i]];
+            let position = vec3(transform[0][3], transform[1][3], transform[2][3]);
+            if (this.walls_to_add[i] < 42) {
+                this.v_walls.push(position)
+            }
+            else {
+                this.h_walls.push(position)
+            }
         }
+        this.v_walls = this.v_walls.filter((vec, index) => {
+            return this.v_walls.findIndex(otherVec => this.areVectorsEqual(vec, otherVec)) === index;
+        });
+        this.h_walls = this.h_walls.filter((vec, index) => {
+            return this.h_walls.findIndex(otherVec => this.areVectorsEqual(vec, otherVec)) === index;
+        });
         
 
         //TANK
@@ -297,14 +364,28 @@ export class Game extends Scene {
         this.p2_y = this.shapes.p2.y;
         this.p2_rot = this.shapes.p2.r;
         
-
+        
         // draw the bullets for p1
         for(let i = 0; i < this.p1_bullets.length; i++) {
             let curBullet = this.p1_bullets[i];
             curBullet.x = curBullet.x + (Math.cos(curBullet.rot) * curBullet.v*dt);
             curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
-            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(0.5, 0.5, 0.5));
+            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(curBullet.rad, curBullet.rad, curBullet.rad));
             this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
+        }
+        // p1 bullet-wall collision
+        for(let i = 0; i < this.p1_bullets.length; i++) {
+            let curBullet = this.p1_bullets[i];
+            this.v_walls.forEach((wall) => {
+                if (this.bullet_v_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], vec(4.0, 0.25))) {
+                    this.p1_bullets[i].change_rot(Math.PI);
+                }
+            })
+            this.h_walls.forEach((wall) => {
+                if (this.bullet_h_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], vec(4.0, 0.25))) {
+                    this.p1_bullets[i].change_rot(0);
+                }
+            })
         }
         // bullets disappear after couple of seconds
         for(let i = 0; i < this.p1_bullets.length; i++) {
@@ -323,6 +404,20 @@ export class Game extends Scene {
             curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
             let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(0.5, 0.5, 0.5));
             this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
+        }
+        // p1 bullet-wall collision
+        for(let i = 0; i < this.p2_bullets.length; i++) {
+            let curBullet = this.p2_bullets[i];
+            this.v_walls.forEach((wall) => {
+                if (this.bullet_v_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], vec(4.0, 0.25))) {
+                    this.p2_bullets[i].change_rot(Math.PI);
+                }
+            })
+            this.h_walls.forEach((wall) => {
+                if (this.bullet_h_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], vec(4.0, 0.25))) {
+                    this.p2_bullets[i].change_rot(0);
+                }
+            })
         }
         // bullets disappear after couple of seconds
         for(let i = 0; i < this.p2_bullets.length; i++) {
