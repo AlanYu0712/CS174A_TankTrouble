@@ -146,21 +146,6 @@ export class Game extends Scene {
         // generate a couple walls for the stage - Nathan
         const wall_transform = []
         var wall_index = 0;
-
-        /*
-        for (let y = -2; y<4; y++){
-            for (let x = -3; x<4; x++){
-                wall_transform[wall_index] = Mat4.translation(8*x, 0, 8*y).times(Mat4.rotation(Math.PI/2,0,1,0)).times(Mat4.scale(4.0,2.0,0.25)).times(Mat4.translation(1, 0, 0));
-                wall_index++;
-            }
-        }
-        for (let y = -3; y<4; y++){
-            for (let x = -3; x<3; x++){
-                wall_transform[wall_index] = Mat4.translation(8*x, 0, 8*y).times(Mat4.scale(4.0,2.0,0.25)).times(Mat4.translation(1, 0, 0));
-                wall_index++;
-            }
-        }
-        */
         for (let y = -3; y<3; y++){
             for (let x = -3; x<4; x++){
                 wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
