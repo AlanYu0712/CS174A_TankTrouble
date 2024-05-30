@@ -120,17 +120,17 @@ export class Game extends Scene {
         var mazes = [];
         this.h_walls = [];
         this.v_walls = [];
-        const outline = [0,7,14,21,28,35,  42,43,44,45,46,47,  6,13,20,27,34,41, 78,79,80,81,82,83];
+        const outline = [60,61,62,63];
         this.walls_to_add = outline;
 
         for (let i = 0; i<30; i++){
-            this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 77))
+            this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
         }
 
         this.generate_walls = () => {
             this.walls_to_add = outline;
             for (let i = 0; i<30; i++){
-                this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 77))
+                this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
             }
         }
 
@@ -266,29 +266,40 @@ export class Game extends Scene {
         this.shapes.floor.draw(context, program_state, floor_transform, this.materials.ground);
 
         // generate a couple walls for the stage - Nathan
+        // 0-29 VERTICAL WALLS
         const wall_transform = [];
         this.v_walls = [];
         this.h_walls = [];
         var wall_index = 0;
         for (let y = -3; y<3; y++){
-            for (let x = -3; x<4; x++){
+            for (let x = -2; x<3; x++){
                 wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
                 wall_index++;
             }
         }
-        // 42-83 HORIZONTAL WALLS
-        for (let y = -3; y<4; y++){
+        // 30-59 HORIZONTAL WALLS
+        for (let y = -2; y<3; y++){
             for (let x = -3; x<3; x++){
                 wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
                 wall_index++;
             }
         }
+        // 60-63 BORDER WALLS
+        wall_transform[wall_index] = Mat4.translation(0,24,0).times(Mat4.scale(24.0,0.25,2.0));
+        wall_index++;
+        wall_transform[wall_index] = Mat4.translation(0,-24,0).times(Mat4.scale(24.0,0.25,2.0));
+        wall_index++;
+        wall_transform[wall_index] = Mat4.translation(24,0,0).times(Mat4.scale(0.25,24.0,2.0));
+        wall_index++;
+        wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.25,24.0,2.0));
+        
+        
         for (let i = 0; i<this.walls_to_add.length; i++){
             this.shapes.border.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
 
             let transform = wall_transform[this.walls_to_add[i]];
             let position = vec3(transform[0][3], transform[1][3], transform[2][3]);
-            if (this.walls_to_add[i] < 42) {
+            if (this.walls_to_add[i] < 30) {
                 this.v_walls.push(position)
             }
             else {
