@@ -37,21 +37,51 @@ class Bullet {
     }
 }
 
-class Tank extends Shape{
+class Tank extends Shape{ //SHOOTS IN THE +X direction
     constructor(position){
         super("position", "normal",);
         // Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
+        var tread_width = 0.8;
+        var tread_height = 0.4;
+        var turret_width = 0.5;
+        var barrel_width = 0.2;
         this.arrays.position = Vector3.cast(
-            [-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, 1, 1], [-1, 1, 1],
-            [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1], [1, -1, 1], [1, -1, -1], [1, 1, 1], [1, 1, -1],
-            [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1], [1, -1, -1], [-1, -1, -1], [1, 1, -1], [-1, 1, -1]);
+            [-0.8,-tread_width,-tread_height], [-0.8,-tread_width,-1], [0.6,-tread_width,-1], [0.6,-tread_width,-tread_height], //treads
+            [-1,-tread_width,-0.6], [-1, tread_width,-0.6], [0.8, tread_width,-0.6], [0.8,-tread_width,-0.6],
+            [-0.8, tread_width,-tread_height], [-0.8, tread_width,-1], [0.6, tread_width,-1], [0.6, tread_width,-tread_height],
+            
+            [-0.6,-turret_width,-tread_height], [-0.6,-turret_width, 0.2], [0.4,-turret_width, 0.2], [0.4,-turret_width,-tread_height], //turret 
+            [-0.6, turret_width,-tread_height], [-0.6, turret_width, 0.2], [0.4, turret_width, 0.2], [0.4, turret_width,-tread_height],
+
+            [0.4,-barrel_width,-0.25], [0.4,-barrel_width, 0.1], [1.2,-barrel_width, 0.1], [1.2,-barrel_width,-0.25], //barrel
+            [0.4, barrel_width,-0.25], [0.4, barrel_width, 0.1], [1.2, barrel_width, 0.1], [1.2, barrel_width,-0.25]
+        );
         this.arrays.normal = Vector3.cast(
-            [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0],
-            [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0],
-            [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, -1], [0, 0, -1], [0, 0, -1], [0, 0, -1]);
+            [-0.8,-tread_width,-tread_height], [-0.8,-tread_width,-1], [0.6,-tread_width,-1], [0.6,-tread_width,-tread_height], //treads
+            [-1,-tread_width,-0.6], [-1, tread_width,-0.6], [0.8, tread_width,-0.6], [0.8,-tread_width,-0.6],
+            [-0.8, tread_width,-tread_height], [-0.8, tread_width,-1], [0.6, tread_width,-1], [0.6, tread_width,-tread_height],
+            
+            [-0.6,-turret_width,-tread_height], [-0.6,-turret_width, 0.2], [0.4,-turret_width, 0.2], [0.4,-turret_width,-tread_height], //turret 
+            [-0.6, turret_width,-tread_height], [-0.6, turret_width, 0.2], [0.4, turret_width, 0.2], [0.4, turret_width,-tread_height],
+
+            [0.4,-barrel_width,-0.25], [0.4,-barrel_width, 0.1], [1.2,-barrel_width, 0.1], [1.2,-barrel_width,-0.25], //barrel
+            [0.4, barrel_width,-0.25], [0.4, barrel_width, 0.1], [1.2, barrel_width, 0.1], [1.2, barrel_width,-0.25]);
         // Arrange the vertices into a square shape in texture space too:
-        this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
-            14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+        this.indices.push(0, 3, 2, 0, 1, 2,  //left and right treads
+                          8, 9, 10, 8, 11, 10,
+                          4, 0, 1, 3, 7, 2, 5, 8, 9, 10, 6, 11,
+                          0, 8, 5, 0, 4, 5, 1, 9, 5, 1, 4, 5,   
+                          3, 11, 6, 3, 7, 6, 2, 10, 6, 2, 7, 6, //front and back of treads
+                          0, 8, 3, 8, 11, 3, 1, 9, 2, 2, 9, 10, //top and bottom of treads
+
+                          12, 13, 14, 12, 15, 14, 16, 19, 18, 16, 17, 18, //left and right of turret
+                          12, 16, 17, 12, 13, 17, 15, 19, 18, 15, 14, 18, //front and back of turret
+                          13, 17, 14, 14, 18, 17, 12, 16, 19, 12, 15, 19, //top and bottom of turret
+                          
+                          20, 21, 22, 20, 23, 22, 24, 27, 26, 24, 25, 26, //left and right of barrel
+                          20, 24, 25, 20, 21, 25, 23, 27, 26, 23, 22, 26, //front and back of barrel
+                          21, 25, 22, 22, 26, 25, 20, 24, 27, 20, 23, 27 //top and bottom of barrel
+                         );
 
 
         this.position = position;
@@ -184,10 +214,10 @@ export class Game extends Scene {
             {ambient: 0.8, diffusivity: 1, color: hex_color('#1a9ffa'), specularity: 1, smoothness: 30}),
 
             tank1_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#1a9ffa"), specularity: 0}),
+                {ambient: 0.4, diffusivity: 0.5, color: hex_color("#1a9ffa"), specularity: 0}),
             
             tank2_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#FF0000"), specularity: 0}),
+                {ambient: 0.4, diffusivity: 0.5, color: hex_color("#FF0000"), specularity: 0}),
         }
 
         // changed camera angle to be more perspective - Nathan
@@ -278,8 +308,8 @@ export class Game extends Scene {
         // this.shapes.axis.draw(context, program_state, model_transform, this.white, "LINES");
         
         // manipulating light
-        const light_position = vec4(0, 0, 20, 1); //changed to be higher - Nathan
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 5000)]; //changed to be a little brighter - Nathan 
+        const light_position = vec4(-10, -10, 10, 1); //changed to be higher - Nathan
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 2000)]; //changed to be a little brighter - Nathan 
 
         // generate ground for the stage - Nathan
         let floor_transform = Mat4.scale(24.0,24.0,0.2).times(Mat4.translation(0, 0, -1.0));
@@ -333,7 +363,6 @@ export class Game extends Scene {
         wall_transform[wall_index] = Mat4.translation(24,0,0).times(Mat4.scale(0.25,24.0,2.0));
         wall_index++;
         wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.25,24.0,2.0));
-        
         
         for (let i = 0; i<this.walls_to_add.length; i++){
             this.shapes.border.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
