@@ -27,7 +27,7 @@ class Bullet {
         this.y = y;
         this.z = -5;
         this.rot = rot;
-        this.rad = 0.6
+        this.rad = 0.4;
         this.v = 12.0;
         this.life = 480;
     }
@@ -125,8 +125,8 @@ export class Game extends Scene {
         super();
         
         // Tank Speed
-        this.tank_move_speed = 0.16;
-        this.tank_rot_speed = 0.04;
+        this.tank_move_speed = 0.12;
+        this.tank_rot_speed = 0.05;
 
         // player 1  
         this.p1_bullets = [];
@@ -150,9 +150,14 @@ export class Game extends Scene {
         var mazes = [];
         this.h_walls = [];
         this.v_walls = [];
-        this.border = [];
+        this.borderV = [];
+        this.borderH = [];
         const outline = [60,61,62,63];
         this.walls_to_add = outline;
+
+        this.particles1 = [];
+        this.particles2 = [];
+        this.gravity = vec(0, -9.8, 0);
 
         for (let i = 0; i<30; i++){
             this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
@@ -179,8 +184,7 @@ export class Game extends Scene {
             }
         }
 
-        this.particles = [];
-        this.gravity = vec(0, -9.8, 0);
+        
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'axis': new Axis(),
@@ -188,8 +192,8 @@ export class Game extends Scene {
             bullet: new defs.Subdivision_Sphere(4),
             floor: new Background(),
             border: new Background(),
-            p1: new Tank(Mat4.identity().times(Mat4.translation(5, 10, 1))),
-            p2: new Tank(Mat4.identity().times(Mat4.translation(-6, -8, 1))),
+            p1: new Tank(Mat4.identity().times(Mat4.translation(5, 10, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
+            p2: new Tank(Mat4.identity().times(Mat4.translation(-6, -8, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
         };
 
         // *** Materials
@@ -208,10 +212,13 @@ export class Game extends Scene {
                 {ambient: 0.5, diffusivity: 0.6, color: hex_color("#C3C3C3")}),
 
             bullet: new Material(new defs.Phong_Shader(), 
-            {ambient: 0.8, diffusivity: 1, color: hex_color('#000000'), specularity: 1, smoothness: 30}),
+            {ambient: 0.8, diffusivity: 1, color: hex_color('#000000'), smoothness: 30}),
 
-            particle: new Material(new defs.Phong_Shader(), 
-            {ambient: 0.8, diffusivity: 1, color: hex_color('#1a9ffa'), specularity: 1, smoothness: 30}),
+            particle1: new Material(new defs.Phong_Shader(), 
+            {ambient: 0.6, diffusivity: 1, color: hex_color('#1a9ffa'), specularity: 1, smoothness: 30}),
+
+            particle2: new Material(new defs.Phong_Shader(), 
+            {ambient: 0.6, diffusivity: 1, color: hex_color('#FF0000'), specularity: 1, smoothness: 30}),
 
             tank1_mat: new Material(new defs.Phong_Shader(),
                 {ambient: 0.4, diffusivity: 0.5, color: hex_color("#1a9ffa"), specularity: 0}),
@@ -234,7 +241,7 @@ export class Game extends Scene {
         this.key_triggered_button("P1 Tank Backward", ["s"], ()=>{this.p1_move_backward = true},undefined,()=>{this.p1_move_backward=false});
         this.key_triggered_button("P1 Tank Rotate Left", ["a"], ()=>{this.p1_rot_left = true},undefined,()=>{this.p1_rot_left=false});
         this.key_triggered_button("P1 Tank Rotate Right", ["d"], ()=>{this.p1_rot_right = true},undefined,()=>{this.p1_rot_right=false});
-        this.key_triggered_button("P1 Shoot bullet", ["v"], () => this.shootBulletp1(this.p1_x + 1.5*Math.cos(this.p1_rot), this.p1_y + 1.5*Math.sin(this.p1_rot), this.p1_rot));
+        this.key_triggered_button("P1 Shoot bullet", ["v"], () => this.shootBulletp1(this.p1_x + 1.8*Math.cos(this.p1_rot), this.p1_y + 1.8*Math.sin(this.p1_rot), this.p1_rot));
         
         this.new_line();
         this.new_line();
@@ -244,18 +251,28 @@ export class Game extends Scene {
         this.key_triggered_button("P2 Tank Backward", ["l"], ()=>{this.p2_move_backward = true},undefined,()=>{this.p2_move_backward=false});
         this.key_triggered_button("P2 Tank Rotate Left", ["k"], ()=>{this.p2_rot_left = true},undefined,()=>{this.p2_rot_left=false});
         this.key_triggered_button("P2 Tank Rotate Right", [";"], ()=>{this.p2_rot_right = true},undefined,()=>{this.p2_rot_right=false});
-        this.key_triggered_button("P2 Shoot bullet", ["n"], () => this.shootBulletp2(this.p2_x + 1.5*Math.cos(this.p2_rot), this.p2_y + 1.5*Math.sin(this.p2_rot), this.p2_rot));
-
-        this.key_triggered_button("Explode", ["e"], () => this.create_explosion(vec(0, 0, 0)));
+        this.key_triggered_button("P2 Shoot bullet", ["n"], () => this.shootBulletp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
         
         // this.new_line();
     }
 
-    create_explosion(position) {
+    p1_explosion(position) {
         const num_particles = 100;
         for (let i = 0; i < num_particles; i++) {
           const velocity = vec(Math.random() - 0.5, Math.random(), Math.random() - 0.5).normalized().times(5); // Random direction
-          this.particles.push({
+          this.particles1.push({
+            position: position.copy(),
+            velocity: velocity,
+            lifetime: 5.0,
+          });
+        }
+    }
+
+    p2_explosion(position) {
+        const num_particles = 100;
+        for (let i = 0; i < num_particles; i++) {
+          const velocity = vec(Math.random() - 0.5, Math.random(), Math.random() - 0.5).normalized().times(5); // Random direction
+          this.particles2.push({
             position: position.copy(),
             velocity: velocity,
             lifetime: 5.0,
@@ -320,24 +337,39 @@ export class Game extends Scene {
         const wall_transform = [];
         this.v_walls = [];
         this.h_walls = [];
-        this.border = [];
+        this.borderV = [];
+        this.borderH = [];
         var wall_index = 0;
 
-        for (let i = 0; i < this.particles.length; i++) {
-            const p = this.particles[i];
-      
-            // Update particle position
+        for (let i = 0; i < this.particles1.length; i++) {
+            const p = this.particles1[i];
+            // update particle position with gravity (x = at^2 + vt + x)
             p.velocity = p.velocity.plus(this.gravity.times(dt));
             p.position = p.position.plus(p.velocity.times(dt));
             p.lifetime -= dt;
       
-            // Render particle
-            this.shapes.particle.draw(context, program_state, Mat4.translation(p.position[0], p.position[1], p.position[2]).times(Mat4.scale(0.3,0.3,0.3)), this.materials.particle);
+            this.shapes.particle.draw(context, program_state, Mat4.translation(p.position[0], p.position[1], p.position[2]).times(Mat4.scale(0.3,0.3,0.3)), this.materials.particle1);
       
-            // Remove dead particles
+            // remove particles after its lifetime
             if (p.lifetime <= 0) {
-              this.particles.splice(i, 1);
-              i--; // Adjust index after removal
+              this.particles1.splice(i, 1);
+              i--; 
+            }
+        }
+
+        for (let i = 0; i < this.particles2.length; i++) {
+            const p = this.particles2[i];
+            // update particle position with gravity (x = at^2 + vt + x)
+            p.velocity = p.velocity.plus(this.gravity.times(dt));
+            p.position = p.position.plus(p.velocity.times(dt));
+            p.lifetime -= dt;
+      
+            this.shapes.particle.draw(context, program_state, Mat4.translation(p.position[0], p.position[1], p.position[2]).times(Mat4.scale(0.3,0.3,0.3)), this.materials.particle2);
+
+            // remove particles after its lifetime
+            if (p.lifetime <= 0) {
+              this.particles2.splice(i, 1);
+              i--; 
             }
         }
 
@@ -364,6 +396,7 @@ export class Game extends Scene {
         wall_index++;
         wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.25,24.0,2.0));
         
+        
         for (let i = 0; i<this.walls_to_add.length; i++){
             this.shapes.border.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
 
@@ -372,22 +405,24 @@ export class Game extends Scene {
             if (this.walls_to_add[i] < 30) {
                 this.v_walls.push(position);
             }
-            else if (29 < this.walls_to_add[i] < 60){
+            else if (this.walls_to_add[i] == 62 || this.walls_to_add[i] == 63) {
+                this.borderV.push(position);
+            }
+            else if (this.walls_to_add[i] == 60 || this.walls_to_add[i] == 61) {
+                this.borderH.push(position);
+            }
+            else {
                 this.h_walls.push(position);
             }
-            else 
-                this.border.push(position);
         }
+        
         this.v_walls = this.v_walls.filter((vec, index) => {
             return this.v_walls.findIndex(otherVec => this.areVectorsEqual(vec, otherVec)) === index;
         });
         this.h_walls = this.h_walls.filter((vec, index) => {
             return this.h_walls.findIndex(otherVec => this.areVectorsEqual(vec, otherVec)) === index;
         });
-        this.border = this.border.filter((vec, index) => {
-            return this.border.findIndex(otherVec => this.areVectorsEqual(vec, otherVec)) === index;
-        });
-        
+
 
         //TANK
         //Tank P1
@@ -432,7 +467,7 @@ export class Game extends Scene {
             let curBullet = this.p1_bullets[i];
             curBullet.x = curBullet.x + (Math.cos(curBullet.rot) * curBullet.v*dt);
             curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
-            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(curBullet.rad, curBullet.rad, curBullet.rad));
+            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0.9).times(Mat4.scale(curBullet.rad, curBullet.rad, curBullet.rad));
             this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
         }
         // p1 bullet-wall & bullet-tank collision
@@ -443,21 +478,32 @@ export class Game extends Scene {
                     this.p1_bullets[i].change_rot(Math.PI);
                 }
             })
+            this.borderV.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.25)) {
+                    this.p1_bullets[i].change_rot(Math.PI);
+                }
+            })
             this.h_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 4.0)) {
                     this.p1_bullets[i].change_rot(0);
                 }
             })
-            // ADD COLLISION CHECK FOR BORDER VERTICAL HORIZONTAL
+            this.borderH.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 24.0)) {
+                    this.p1_bullets[i].change_rot(0);
+                }
+            })
             // check collision for both self and opponent tank
-            if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.5, 0.5)) {
+            if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
+                this.p2_explosion(vec(this.p2_x, this.p2_y, 0));
                 this.p2_life = 0;
                 this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p2_y = 100;
                 this.p1_bullets.splice(i, 1);
                 this.p1_bullet_cnt += 1;
             }
-            else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.5, 0.5)) {
+            else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
+                this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
                 this.p1_life = 0;
                 this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p1_y = 100;
@@ -480,30 +526,43 @@ export class Game extends Scene {
             let curBullet = this.p2_bullets[i];
             curBullet.x = curBullet.x + (Math.cos(curBullet.rot) * curBullet.v*dt);
             curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
-            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0).times(Mat4.scale(0.5, 0.5, 0.5));
+            let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0.9).times(Mat4.scale(0.5, 0.5, 0.5));
             this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
         }
         // p2 bullet-wall collision
         for(let i = 0; i < this.p2_bullets.length; i++) {
             let curBullet = this.p2_bullets[i];
             this.v_walls.forEach((wall) => {
-                if (this.bullet_v_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], vec(4.0, 0.25))) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.25)) {
+                    this.p2_bullets[i].change_rot(Math.PI);
+                }
+            })
+            this.borderV.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.25)) {
                     this.p2_bullets[i].change_rot(Math.PI);
                 }
             })
             this.h_walls.forEach((wall) => {
-                if (this.bullet_h_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], vec(4.0, 0.25))) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 4.0)) {
                     this.p2_bullets[i].change_rot(0);
                 }
             })
-            if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.5, 0.5)) {
+            this.borderH.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 24.0)) {
+                    this.p2_bullets[i].change_rot(0);
+                }
+            })
+            // check collision for both self and opponent tank
+            if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
+                this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
                 this.p1_life = 0;
                 this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p1_y = 100;
                 this.p2_bullets.splice(i, 1);
                 this.p2_bullet_cnt += 1;
             }
-            else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.5, 0.5)) {
+            else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
+                this.p2_explosion(vec(this.p2_x, this.p2_y, 0)); 
                 this.p2_life = 0;
                 this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p2_y = 100;
