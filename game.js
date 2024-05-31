@@ -1,8 +1,10 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
+
+const {Cube, Axis_Arrows, Textured_Phong} = defs
 
 class Axis extends Shape {
     constructor() {
@@ -37,6 +39,29 @@ class Bullet {
     }
 }
 
+/* //Prototype for shell shape, didn't work because bullets don't rotate when hitting walls
+class Shell extends Shape{
+    constructor() {
+        super("position", "normal");
+        var shell_width = 0.7;
+        this.arrays.position = Vector3.cast(
+            [-1, shell_width, shell_width], [0.5, shell_width, shell_width], [0.5, shell_width,-shell_width],[-1, shell_width,-shell_width], //right side
+            [-1,-shell_width, shell_width], [0.5,-shell_width, shell_width], [0.5,-shell_width,-shell_width],[-1,-shell_width,-shell_width], //left side
+            [1,0,0] //tip
+            );
+        this.arrays.normal = Vector3.cast(
+            [-1, shell_width, shell_width], [0.5, shell_width, shell_width], [0.5, shell_width,-shell_width],[-1, shell_width,-shell_width], //right side
+            [-1,-shell_width, shell_width], [0.5,-shell_width, shell_width], [0.5,-shell_width,-shell_width],[-1,-shell_width,-shell_width], //left side
+            [1,0,0] //tip
+            );
+        this.indices.push(0,1,2,0,3,2,  4,5,6,4,7,6, //left and right
+                          0,4,5,0,1,5,  3,7,6,3,2,6, //top and bottom
+                          0,3,7,0,4,7, //back
+                          1,8,5,5,8,6,6,8,2,2,8,1 //front
+                         );
+    }
+}*/
+
 class Tank extends Shape{ //SHOOTS IN THE +X direction
     constructor(position){
         super("position", "normal",);
@@ -56,6 +81,7 @@ class Tank extends Shape{ //SHOOTS IN THE +X direction
             [0.4,-barrel_width,-0.25], [0.4,-barrel_width, 0.1], [1.2,-barrel_width, 0.1], [1.2,-barrel_width,-0.25], //barrel
             [0.4, barrel_width,-0.25], [0.4, barrel_width, 0.1], [1.2, barrel_width, 0.1], [1.2, barrel_width,-0.25]
         );
+        //Normal vectors are equivalent to position points
         this.arrays.normal = Vector3.cast(
             [-0.8,-tread_width,-tread_height], [-0.8,-tread_width,-1], [0.6,-tread_width,-1], [0.6,-tread_width,-tread_height], //treads
             [-1,-tread_width,-0.6], [-1, tread_width,-0.6], [0.8, tread_width,-0.6], [0.8,-tread_width,-0.6],
@@ -66,6 +92,8 @@ class Tank extends Shape{ //SHOOTS IN THE +X direction
 
             [0.4,-barrel_width,-0.25], [0.4,-barrel_width, 0.1], [1.2,-barrel_width, 0.1], [1.2,-barrel_width,-0.25], //barrel
             [0.4, barrel_width,-0.25], [0.4, barrel_width, 0.1], [1.2, barrel_width, 0.1], [1.2, barrel_width,-0.25]);
+        
+        
         // Arrange the vertices into a square shape in texture space too:
         this.indices.push(0, 3, 2, 0, 1, 2,  //left and right treads
                           8, 9, 10, 8, 11, 10,
@@ -153,13 +181,13 @@ export class Game extends Scene {
         const outline = [60,61,62,63];
         this.walls_to_add = outline;
 
-        for (let i = 0; i<30; i++){
+        for (let i = 0; i<25; i++){
             this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
         }
 
         this.generate_walls = () => {
             this.walls_to_add = outline;
-            for (let i = 0; i<30; i++){
+            for (let i = 0; i<25; i++){
                 this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
             }
         }
@@ -182,7 +210,8 @@ export class Game extends Scene {
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'axis': new Axis(),
-            bullet: new defs.Subdivision_Sphere(4),
+            //bullet: new Shell(),
+            bullet: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(4),
             floor: new Background(),
             border: new Background(),
             p1: new Tank(Mat4.identity().times(Mat4.translation(5, 10, 1))),
@@ -208,10 +237,11 @@ export class Game extends Scene {
             {ambient: 0.8, diffusivity: 1, color: hex_color('#000000'), specularity: 1, smoothness: 30}),
 
             tank1_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 0.4, diffusivity: 0.5, color: hex_color("#1a9ffa"), specularity: 0}),
+                {ambient: 0.6, diffusivity: 0.5, color: hex_color("#454B1B"), specularity: 0}),
+                
             
             tank2_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 0.4, diffusivity: 0.5, color: hex_color("#FF0000"), specularity: 0}),
+                {ambient: 0.6, diffusivity: 0.5, color: hex_color("#404F69"), specularity: 0}),
         }
         // changed camera angle to be more perspective - Nathan
         this.initial_camera_location = Mat4.look_at(vec3(0, -15, 80), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -673,3 +703,22 @@ class Ring_Shader extends Shader {
     }
 }
 
+class Texture_Rotate extends Textured_Phong {
+    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
+    fragment_glsl_code() {
+        return this.shared_glsl_code() + `
+            varying vec2 f_tex_coord;
+            uniform sampler2D texture;
+            uniform float animation_time;
+            
+            void main(){
+                // Sample the texture image in the correct place:
+                vec4 tex_color = texture2D( texture, f_tex_coord);
+                if( tex_color.w < .01 ) discard;
+                                                                         // Compute an initial (ambient) color:
+                gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
+                                                                         // Compute the final color with contributions from lights:
+                gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+        } `;
+    }
+}
