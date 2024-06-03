@@ -39,6 +39,13 @@ class Bullet {
     }
 }
 
+class Powerup {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
 class Tank extends Shape{ //SHOOTS IN THE +X direction
     constructor(position){
         super("position", "normal",);
@@ -135,22 +142,26 @@ export class Game extends Scene {
 
         // player 1  
         this.p1_bullets = [];
+        this.p1_shotgun_bullets = [];
         this.p1_bullet_cnt = 5;
         this.p1_move_forward = this.p1_move_backward = this.p1_rot_left = this.p1_rot_right = false;
         this.p1_x = 0;
         this.p1_y = 0;
         this.p1_rot = 0;
         this.p1_life = 1;
+        this.p1_shotgun_mode = 0;
 
 
         // player 2  
         this.p2_bullets = [];
+        this.p2_shotgun_bullets = [];
         this.p2_bullet_cnt = 5;
         this.p2_move_forward = this.p2_move_backward=this.p2_rot_left=this.p2_rot_right = false;
         this.p2_x = 0;
         this.p2_y = 0;
         this.p2_rot = 0;
         this.p2_life = 1;
+        this.p2_shotgun_mode = 0;
 
         //Camera Positions
         this.camera_mode = 0; //0 = initial overhead position, 1 = player 1 position, 2 = player 2 position
@@ -166,7 +177,21 @@ export class Game extends Scene {
 
         this.particles1 = [];
         this.particles2 = [];
-        this.gravity = vec(0, -9.8, 0);
+        this.gravity = vec(0, -13.0, 0);
+
+        // powerups
+        this.timer = 0;
+        this.powerups = [];
+
+        this.soundEffects = {
+            score: new Audio('assets/ittybitty.mp3'),
+            shoot: new Audio('assets/shoot.mp3'),
+            bounce: new Audio('assets/bounce.mp3'),
+            explode: new Audio('assets/explosion.mp3'),
+            shotgun: new Audio('assets/shotgun.mp3'),
+            shotgun_shoot: new Audio('assets/shotgun_shoot.mp3'),
+        }
+        this.soundEffects.score.volume = 0.2;
 
         for (let i = 0; i<20; i++){
             this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
@@ -183,6 +208,19 @@ export class Game extends Scene {
             if (this.p1_bullet_cnt != 0 && this.p1_life == 1) {
                 this.p1_bullets.push(new Bullet(x, y, rot));
                 this.p1_bullet_cnt -= 1;
+                this.soundEffects.shoot.play();
+            }
+        }
+        // Add a shoot special function for shotgun where you store 5 bullets immediately and then toggle shotgun mode off
+        this.shootShotgunp1 = (x, y, rot) => {
+            if (this.p1_shotgun_mode == 1) {
+                this.p1_shotgun_mode = 0;
+                this.p1_shotgun_bullets.push(new Bullet(x, y, rot));
+                this.p1_shotgun_bullets.push(new Bullet(x, y, rot + 0.26));
+                this.p1_shotgun_bullets.push(new Bullet(x, y, rot - 0.26));
+                this.p1_shotgun_bullets.push(new Bullet(x, y, rot + 0.52));
+                this.p1_shotgun_bullets.push(new Bullet(x, y, rot - 0.52));
+                this.soundEffects.shotgun_shoot.play();
             }
         }
 
@@ -190,6 +228,19 @@ export class Game extends Scene {
             if (this.p2_bullet_cnt != 0 && this.p2_life == 1) {
                 this.p2_bullets.push(new Bullet(x, y, rot));
                 this.p2_bullet_cnt -= 1;
+                this.soundEffects.shoot.play();
+            }
+        }
+
+        this.shootShotgunp2 = (x, y, rot) => {
+            if (this.p2_shotgun_mode == 1) {
+                this.p2_shotgun_mode = 0;
+                this.p2_shotgun_bullets.push(new Bullet(x, y, rot));
+                this.p2_shotgun_bullets.push(new Bullet(x, y, rot + 0.26));
+                this.p2_shotgun_bullets.push(new Bullet(x, y, rot - 0.26));
+                this.p2_shotgun_bullets.push(new Bullet(x, y, rot + 0.52));
+                this.p2_shotgun_bullets.push(new Bullet(x, y, rot - 0.52));
+                this.soundEffects.shotgun_shoot.play();
             }
         }
 
@@ -197,6 +248,7 @@ export class Game extends Scene {
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'axis': new Axis(),
+            powerup: new Cube(),
             particle: new defs.Subdivision_Sphere(3),
             bullet: new defs.Subdivision_Sphere(4),
             floor: new Cube(),
@@ -244,10 +296,13 @@ export class Game extends Scene {
             
             tank2_mat: new Material(new defs.Phong_Shader(),
                 {ambient: 0.6, diffusivity: 1.0, color: hex_color("#404F69"), specularity: 0}),
+                
+            powerup: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 1, color: hex_color("#FFFF00")}),
         }
 
         // changed camera angle to be more perspective - Nathan
-        this.initial_camera_location = Mat4.look_at(vec3(0, -20, 80), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, -45, 45), vec3(0, -3, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -261,6 +316,7 @@ export class Game extends Scene {
         this.key_triggered_button("P1 Tank Rotate Left", ["a"], ()=>{this.p1_rot_left = true},undefined,()=>{this.p1_rot_left=false});
         this.key_triggered_button("P1 Tank Rotate Right", ["d"], ()=>{this.p1_rot_right = true},undefined,()=>{this.p1_rot_right=false});
         this.key_triggered_button("P1 Shoot bullet", ["v"], () => this.shootBulletp1(this.p1_x + 1.8*Math.cos(this.p1_rot), this.p1_y + 1.8*Math.sin(this.p1_rot), this.p1_rot));
+        this.key_triggered_button("Use Special", ["c"], () => this.shootShotgunp1(this.p1_x + 1.8*Math.cos(this.p1_rot), this.p1_y + 1.8*Math.sin(this.p1_rot), this.p1_rot));
         
         this.new_line();
         this.new_line();
@@ -270,20 +326,24 @@ export class Game extends Scene {
         this.key_triggered_button("P2 Tank Backward", ["l"], ()=>{this.p2_move_backward = true},undefined,()=>{this.p2_move_backward=false});
         this.key_triggered_button("P2 Tank Rotate Left", ["k"], ()=>{this.p2_rot_left = true},undefined,()=>{this.p2_rot_left=false});
         this.key_triggered_button("P2 Tank Rotate Right", [";"], ()=>{this.p2_rot_right = true},undefined,()=>{this.p2_rot_right=false});
-        this.key_triggered_button("P2 Shoot bullet", ["n"], () => this.shootBulletp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
+        this.key_triggered_button("P2 Shoot bullet", ["["], () => this.shootBulletp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
+        this.key_triggered_button("Use Special", ["]"], () => this.shootShotgunp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
         
         this.new_line();
         this.new_line();
 
         //Camera angles
-        this.key_triggered_button("Initial Camera Position", ["0"], ()=> this.camera_mode = 0);
+        this.key_triggered_button("Initial Camera Position", ["Control", "0"], ()=> this.camera_mode = 0);
         this.new_line();
-        this.key_triggered_button("P1 Third person persepctive", ["8"], ()=> this.camera_mode = 1);
+        this.key_triggered_button("P1 Third person persepctive", ["Control", "1"], ()=> this.camera_mode = 1);
         this.new_line();
-        this.key_triggered_button("P2 Third person persepctive", ["9"], ()=> this.camera_mode = 2);
+        this.key_triggered_button("P2 Third person persepctive", ["Control", "2"], ()=> this.camera_mode = 2);
+        this.new_line();
+        this.key_triggered_button("Top-down persepctive", ["Control", "3"], ()=> this.camera_mode = 3);
     }
 
     p1_explosion(position) {
+        this.soundEffects.explode.play();
         const num_particles = 100;
         for (let i = 0; i < num_particles; i++) {
           const velocity = vec(Math.random() - 0.5, Math.random(), Math.random() - 0.5).normalized().times(5); // Random direction
@@ -296,6 +356,7 @@ export class Game extends Scene {
     }
 
     p2_explosion(position) {
+        this.soundEffects.explode.play();
         const num_particles = 100;
         for (let i = 0; i < num_particles; i++) {
           const velocity = vec(Math.random() - 0.5, Math.random(), Math.random() - 0.5).normalized().times(5); // Random direction
@@ -347,8 +408,7 @@ export class Game extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         let model_transform = Mat4.identity();
-        // drawing axis for reference
-        // this.shapes.axis.draw(context, program_state, model_transform, this.white, "LINES");
+        this.soundEffects.score.play();
         
         // manipulating light
         const light_position = vec4(0, 0, 100, 1); //changed to be higher - Nathan
@@ -361,7 +421,7 @@ export class Game extends Scene {
         this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[0] = v[0] * 4);
         this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[1] = v[1] * 4);
         this.shapes.floor.draw(context, program_state, floor_transform, this.materials.ground);
-
+        
         // generate a couple walls for the stage - Nathan
         // 0-29 VERTICAL WALLS
         const wall_transform = [];
@@ -407,25 +467,25 @@ export class Game extends Scene {
        // 0-29 VERTICAL WALLS
         for (let y = -3; y<3; y++){
             for (let x = -2; x<3; x++){
-                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.25,wall_height)).times(Mat4.translation(1, 0, 0));
+                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.15,wall_height)).times(Mat4.translation(1, 0, 0));
                 wall_index++;
             }
         }
         // 30-59 HORIZONTAL WALLS
         for (let y = -2; y<3; y++){
             for (let x = -3; x<3; x++){
-                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.scale(4.0,0.25,wall_height)).times(Mat4.translation(1, 0, 0));
+                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.scale(4.0,0.15,wall_height)).times(Mat4.translation(1, 0, 0));
                 wall_index++;
             }
         }
         // 60-63 BORDER WALLS
-        wall_transform[wall_index] = Mat4.translation(0,24,0).times(Mat4.scale(24.0,0.25,wall_height));
+        wall_transform[wall_index] = Mat4.translation(0,24,0).times(Mat4.scale(24.0,0.15,wall_height));
         wall_index++;
-        wall_transform[wall_index] = Mat4.translation(0,-24,0).times(Mat4.scale(24.0,0.25,wall_height));
+        wall_transform[wall_index] = Mat4.translation(0,-24,0).times(Mat4.scale(24.0,0.15,wall_height));
         wall_index++;
-        wall_transform[wall_index] = Mat4.translation(24,0,0).times(Mat4.scale(0.25,24.0,wall_height));
+        wall_transform[wall_index] = Mat4.translation(24,0,0).times(Mat4.scale(0.15,24.0,wall_height));
         wall_index++;
-        wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.25,24.0,wall_height));
+        wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.15,24.0,wall_height));
         
         
         this.shapes.border1.arrays.texture_coord.forEach((v,i,l) => v[0] = v[0] * 6);
@@ -509,10 +569,175 @@ export class Game extends Scene {
         else if(this.camera_mode == 2){
             program_state.set_camera(Mat4.inverse(this.shapes.p2.position.times(Mat4.rotation(-Math.PI/2, 0,1,0)).times(Mat4.rotation(-Math.PI/2, 0,0,1)).times(Mat4.translation(0,2,8))));
         }
+        else if(this.camera_mode == 3){
+            program_state.set_camera(Mat4.look_at(vec3(0, -15, 80), vec3(0, 0, 0), vec3(0, 1, 0)));
+        }
         else{
             program_state.set_camera(this.initial_camera_location);
         }
+
+        // POWERUPS spawn every 10 seconds
+        if (this.timer == 600) {
+            this.powerups.push(new Powerup(0, 0)) // MAKE POWERUPS SPAWN IN RANDOM LOCATIONS, NOT (0,0)
+            this.timer = 0;
+        }
+        else
+            this.timer += 1;
         
+        for(let i = 0; i < this.powerups.length; i++) {
+            if (this.bullet_wall_collision(this.powerups[i].x, this.powerups[i].y, 1.0, this.p1_x, this.p1_y, 0.8, 0.8)) {
+                // let num = Math.floor(Math.random() * 1)
+                // if num == 1 then activate shotgun
+                // if num == 0 the activate whatever else 
+                this.powerups.splice(i, 1);
+                this.p1_shotgun_mode = 1;
+                this.soundEffects.shotgun.play();
+                // handle powerup for player1
+            }
+            else if (this.bullet_wall_collision(this.powerups[i].x, this.powerups[i].y, 1.0, this.p2_x, this.p2_y, 0.8, 0.8)) {
+                // let num = Math.floor(Math.random() * 1)
+                // if num == 1 then activate shotgun
+                // if num == 0 the activate whatever else 
+                this.powerups.splice(i, 1);
+                this.p2_shotgun_mode = 1;
+                this.soundEffects.shotgun.play();
+                // handle powerup for player2
+            }
+            else {
+                let pup_transform = model_transform.times(Mat4.scale(0.7,0.7,0.7)).times(Mat4.translation(this.powerups[i].x, this.powerups[i].y, 0.5*Math.sin(2*t) + 1.5));
+                this.shapes.powerup.draw(context, program_state, pup_transform, this.materials.powerup);
+            }
+        }
+
+        // Draw shotgun bullets for p1
+        if (this.p1_shotgun_bullets.length != 0) {
+            for(let i = 0; i < this.p1_shotgun_bullets.length; i++) {
+                let curBullet = this.p1_shotgun_bullets[i];
+                curBullet.x = curBullet.x + (Math.cos(curBullet.rot) * curBullet.v*dt);
+                curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
+                let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0.9).times(Mat4.scale(curBullet.rad, curBullet.rad, curBullet.rad));
+                this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
+            }
+        }
+        // Handle collision for shotgun pellets
+        for(let i = 0; i < this.p1_shotgun_bullets.length; i++) {
+            let curBullet = this.p1_shotgun_bullets[i];
+            this.v_walls.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
+                    this.p1_shotgun_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            this.borderV.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
+                    this.p1_shotgun_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            this.h_walls.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
+                    this.p1_shotgun_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            this.borderH.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
+                    this.p1_shotgun_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            // check collision for both self and opponent tank
+            if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
+                this.p2_explosion(vec(this.p2_x, this.p2_y, 0));
+                this.p2_life = 0;
+                this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
+                this.p2_y = 100;
+                this.p1_shotgun_bullets.splice(i, 1);
+                this.p1_bullet_cnt += 1;
+            }
+            else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
+                this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
+                this.p1_life = 0;
+                this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
+                this.p1_y = 100;
+                this.p1_shotgun_bullets.splice(i, 1);
+                this.p1_bullet_cnt += 1;
+            }
+        }
+        // bullets disappear after couple of seconds
+        for(let i = 0; i < this.p1_shotgun_bullets.length; i++) {
+            let curBullet = this.p1_shotgun_bullets[i];
+            curBullet.life -= 1;
+            if (curBullet.life == 0) {
+                this.p1_shotgun_bullets.splice(i, 1);
+                this.p1_bullet_cnt += 1;
+            }   
+        }
+
+        // handle shotgun shooting for p2
+        if (this.p2_shotgun_bullets.length != 0) {
+            for(let i = 0; i < this.p2_shotgun_bullets.length; i++) {
+                let curBullet = this.p2_shotgun_bullets[i];
+                curBullet.x = curBullet.x + (Math.cos(curBullet.rot) * curBullet.v*dt);
+                curBullet.y = curBullet.y + (Math.sin(curBullet.rot) * curBullet.v*dt);
+                let bullet_transform = Mat4.translation(curBullet.x, curBullet.y, 0.9).times(Mat4.scale(curBullet.rad, curBullet.rad, curBullet.rad));
+                this.shapes.bullet.draw(context, program_state, bullet_transform, this.materials.bullet);
+            }
+        }
+        // Handle collision for shotgun pellets
+        for(let i = 0; i < this.p2_shotgun_bullets.length; i++) {
+            let curBullet = this.p2_shotgun_bullets[i];
+            this.v_walls.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
+                    this.p2_shotgun_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            this.borderV.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
+                    this.p2_shotgun_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            this.h_walls.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
+                    this.p2_shotgun_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            this.borderH.forEach((wall) => {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
+                    this.p2_shotgun_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
+                }
+            })
+            // check collision for both self and opponent tank
+            if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
+                this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
+                this.p1_life = 0;
+                this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
+                this.p1_y = 100;
+                this.p2_shotgun_bullets.splice(i, 1);
+                this.p2_bullet_cnt += 1;
+            }
+            else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
+                this.p2_explosion(vec(this.p2_x, this.p2_y, 0));
+                this.p2_life = 0;
+                this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
+                this.p2_y = 100;
+                this.p2_shotgun_bullets.splice(i, 1);
+                this.p2_bullet_cnt += 1;
+            }
+        }
+        // bullets disappear after couple of seconds
+        for(let i = 0; i < this.p2_shotgun_bullets.length; i++) {
+            let curBullet = this.p2_shotgun_bullets[i];
+            curBullet.life -= 1;
+            if (curBullet.life == 0) {
+                this.p2_shotgun_bullets.splice(i, 1);
+                this.p2_bullet_cnt += 1;
+            }   
+        }
         
         // draw the bullets for p1
         for(let i = 0; i < this.p1_bullets.length; i++) {
@@ -526,23 +751,27 @@ export class Game extends Scene {
         for(let i = 0; i < this.p1_bullets.length; i++) {
             let curBullet = this.p1_bullets[i];
             this.v_walls.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.25)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
                     this.p1_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
                 }
             })
             this.borderV.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.25)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
                     this.p1_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
                 }
             })
             this.h_walls.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 4.0)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
                     this.p1_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
                 }
             })
             this.borderH.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 24.0)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
                     this.p1_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
                 }
             })
             // check collision for both self and opponent tank
@@ -585,23 +814,27 @@ export class Game extends Scene {
         for(let i = 0; i < this.p2_bullets.length; i++) {
             let curBullet = this.p2_bullets[i];
             this.v_walls.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.25)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
                     this.p2_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
                 }
             })
             this.borderV.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.25)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
                     this.p2_bullets[i].change_rot(Math.PI);
+                    this.soundEffects.bounce.play();
                 }
             })
             this.h_walls.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 4.0)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
                     this.p2_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
                 }
             })
             this.borderH.forEach((wall) => {
-                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.25, 24.0)) {
+                if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
                     this.p2_bullets[i].change_rot(0);
+                    this.soundEffects.bounce.play();
                 }
             })
             // check collision for both self and opponent tank
