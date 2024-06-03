@@ -175,6 +175,10 @@ export class Game extends Scene {
         this.p2_rot = 0;
         this.p2_life = 1;
 
+        //Camera Positions
+        this.camera_mode = 0; //0 = initial overhead position, 1 = player 1 position, 2 = player 2 position
+        
+        //Mazes
         var mazes = [];
         this.h_walls = [];
         this.v_walls = [];
@@ -218,10 +222,14 @@ export class Game extends Scene {
             'axis': new Axis(),
             particle: new defs.Subdivision_Sphere(3),
             bullet: new defs.Subdivision_Sphere(4),
-            floor: new Background(),
-            border: new Background(),
-            p1: new Tank(Mat4.identity().times(Mat4.translation(5, 10, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
-            p2: new Tank(Mat4.identity().times(Mat4.translation(-6, -8, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
+            floor: new Cube(),
+            border1: new Cube(),
+            border2: new Cube(),
+            fence: new Cube(),
+            p1: new Tank(Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
+            p2: new Tank(Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
+            box: new Cube(),
+            
         };
 
         // *** Materials
@@ -230,14 +238,19 @@ export class Game extends Scene {
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-            test2: new Material(new Gouraud_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
+            test_T: new Material(new Textured_Phong(),
+                {ambient: 0.6, diffusivity: .6, color: hex_color("#000000"),
+                texture: new Texture("assets/green_camo.jpg", "LINEAR_MIPMAP_LINEAR")
+                }),
             
-            ground: new Material(new Gouraud_Shader(),
-                {ambient: 0.5, diffusivity: 0.6, color: hex_color("#9B7653")}),
+            ground: new Material(new Textured_Phong(),
+                {ambient: 0.3, diffusivity: 0.0, color: hex_color("#C4A484"),
+                texture: new Texture("assets/ground.jpg")
+                }),
 
-            wall: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.6, color: hex_color("#C3C3C3")}),
+            wall: new Material(new Textured_Phong(),
+                {ambient: 0.5, diffusivity: 0.6, color: hex_color("#C3C3C3"),
+                texture: new Texture("assets/brick.jpg")}),
 
             bullet: new Material(new defs.Phong_Shader(), 
             {ambient: 0.8, diffusivity: 1, color: hex_color('#000000'), smoothness: 30}),
@@ -249,15 +262,15 @@ export class Game extends Scene {
             {ambient: 0.6, diffusivity: 1, color: hex_color('#FF0000'), specularity: 1, smoothness: 30}),
 
             tank1_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 0.6, diffusivity: 0.5, color: hex_color("#454B1B"), specularity: 0}),
+                {ambient: 0.6, diffusivity: 1.0, color: hex_color("#454B1B"), specularity: 0}),
                 
             
             tank2_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 0.6, diffusivity: 0.5, color: hex_color("#404F69"), specularity: 0}),
+                {ambient: 0.6, diffusivity: 1.0, color: hex_color("#404F69"), specularity: 0}),
         }
 
         // changed camera angle to be more perspective - Nathan
-        this.initial_camera_location = Mat4.look_at(vec3(0, -15, 80), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, -20, 80), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
@@ -282,7 +295,15 @@ export class Game extends Scene {
         this.key_triggered_button("P2 Tank Rotate Right", [";"], ()=>{this.p2_rot_right = true},undefined,()=>{this.p2_rot_right=false});
         this.key_triggered_button("P2 Shoot bullet", ["n"], () => this.shootBulletp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
         
-        // this.new_line();
+        this.new_line();
+        this.new_line();
+
+        //Camera angles
+        this.key_triggered_button("Initial Camera Position", ["0"], ()=> this.camera_mode = 0);
+        this.new_line();
+        this.key_triggered_button("P1 Third person persepctive", ["8"], ()=> this.camera_mode = 1);
+        this.new_line();
+        this.key_triggered_button("P2 Third person persepctive", ["9"], ()=> this.camera_mode = 2);
     }
 
     p1_explosion(position) {
@@ -349,16 +370,19 @@ export class Game extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         let model_transform = Mat4.identity();
-        
         // drawing axis for reference
         // this.shapes.axis.draw(context, program_state, model_transform, this.white, "LINES");
         
         // manipulating light
-        const light_position = vec4(-10, -10, 10, 1); //changed to be higher - Nathan
+        const light_position = vec4(0, 0, 100, 1); //changed to be higher - Nathan
+        //const light_position = vec4(0, 0, 0, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 2000)]; //changed to be a little brighter - Nathan 
-
+        
         // generate ground for the stage - Nathan
         let floor_transform = Mat4.scale(24.0,24.0,0.2).times(Mat4.translation(0, 0, -1.0));
+        //this.shapes.border.draw(context, program_state, Mat4.translation(0, 0, 3.0), this.materials.wall);
+        this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[0] = v[0] * 4);
+        this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[1] = v[1] * 4);
         this.shapes.floor.draw(context, program_state, floor_transform, this.materials.ground);
 
         // generate a couple walls for the stage - Nathan
@@ -426,8 +450,18 @@ export class Game extends Scene {
         wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.25,24.0,2.0));
         
         
+        this.shapes.border1.arrays.texture_coord.forEach((v,i,l) => v[0] = v[0] * 6);
+        this.shapes.border2.arrays.texture_coord.forEach((v,i,l) => v[1] = v[1] * 6);
         for (let i = 0; i<this.walls_to_add.length; i++){
-            this.shapes.border.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
+            if(this.walls_to_add[i] == 60 || this.walls_to_add[i] == 61){
+                this.shapes.border1.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
+            }
+            else if (this.walls_to_add[i] == 62 || this.walls_to_add[i] == 63){
+                this.shapes.border2.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
+            }
+            else{
+                this.shapes.fence.draw(context, program_state, wall_transform[this.walls_to_add[i]], this.materials.wall);
+            }
 
             let transform = wall_transform[this.walls_to_add[i]];
             let position = vec3(transform[0][3], transform[1][3], transform[2][3]);
@@ -488,6 +522,17 @@ export class Game extends Scene {
             this.p2_x = this.shapes.p2.x;
             this.p2_y = this.shapes.p2.y;
             this.p2_rot = this.shapes.p2.r;
+        }
+
+        //Third Person perspective
+        if(this.camera_mode == 1){
+            program_state.set_camera(Mat4.inverse(this.shapes.p1.position.times(Mat4.rotation(-Math.PI/2, 0,1,0)).times(Mat4.rotation(-Math.PI/2, 0,0,1)).times(Mat4.translation(0,2,8))));
+        }
+        else if(this.camera_mode == 2){
+            program_state.set_camera(Mat4.inverse(this.shapes.p2.position.times(Mat4.rotation(-Math.PI/2, 0,1,0)).times(Mat4.rotation(-Math.PI/2, 0,0,1)).times(Mat4.translation(0,2,8))));
+        }
+        else{
+            program_state.set_camera(this.initial_camera_location);
         }
         
         
@@ -808,7 +853,7 @@ class Ring_Shader extends Shader {
     }
 }
 
-class Texture_Rotate extends Textured_Phong {
+class Texture_ground extends Textured_Phong {
     // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
     fragment_glsl_code() {
         return this.shared_glsl_code() + `
