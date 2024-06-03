@@ -39,29 +39,6 @@ class Bullet {
     }
 }
 
-/* //Prototype for shell shape, didn't work because bullets don't rotate when hitting walls
-class Shell extends Shape{
-    constructor() {
-        super("position", "normal");
-        var shell_width = 0.7;
-        this.arrays.position = Vector3.cast(
-            [-1, shell_width, shell_width], [0.5, shell_width, shell_width], [0.5, shell_width,-shell_width],[-1, shell_width,-shell_width], //right side
-            [-1,-shell_width, shell_width], [0.5,-shell_width, shell_width], [0.5,-shell_width,-shell_width],[-1,-shell_width,-shell_width], //left side
-            [1,0,0] //tip
-            );
-        this.arrays.normal = Vector3.cast(
-            [-1, shell_width, shell_width], [0.5, shell_width, shell_width], [0.5, shell_width,-shell_width],[-1, shell_width,-shell_width], //right side
-            [-1,-shell_width, shell_width], [0.5,-shell_width, shell_width], [0.5,-shell_width,-shell_width],[-1,-shell_width,-shell_width], //left side
-            [1,0,0] //tip
-            );
-        this.indices.push(0,1,2,0,3,2,  4,5,6,4,7,6, //left and right
-                          0,4,5,0,1,5,  3,7,6,3,2,6, //top and bottom
-                          0,3,7,0,4,7, //back
-                          1,8,5,5,8,6,6,8,2,2,8,1 //front
-                         );
-    }
-}*/
-
 class Tank extends Shape{ //SHOOTS IN THE +X direction
     constructor(position){
         super("position", "normal",);
@@ -191,13 +168,13 @@ export class Game extends Scene {
         this.particles2 = [];
         this.gravity = vec(0, -9.8, 0);
 
-        for (let i = 0; i<30; i++){
+        for (let i = 0; i<20; i++){
             this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
         }
 
         this.generate_walls = () => {
             this.walls_to_add = outline;
-            for (let i = 0; i<25; i++){
+            for (let i = 0; i<20; i++){
                 this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
             }
         }
@@ -425,29 +402,30 @@ export class Game extends Scene {
               i--; 
             }
         }
-
+        
+        const wall_height = 3.0;
        // 0-29 VERTICAL WALLS
         for (let y = -3; y<3; y++){
             for (let x = -2; x<3; x++){
-                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
+                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.rotation(Math.PI/2,0,0,1)).times(Mat4.scale(4.0,0.25,wall_height)).times(Mat4.translation(1, 0, 0));
                 wall_index++;
             }
         }
         // 30-59 HORIZONTAL WALLS
         for (let y = -2; y<3; y++){
             for (let x = -3; x<3; x++){
-                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.scale(4.0,0.25,2.0)).times(Mat4.translation(1, 0, 0));
+                wall_transform[wall_index] = Mat4.translation(8*x,8*y,0).times(Mat4.scale(4.0,0.25,wall_height)).times(Mat4.translation(1, 0, 0));
                 wall_index++;
             }
         }
         // 60-63 BORDER WALLS
-        wall_transform[wall_index] = Mat4.translation(0,24,0).times(Mat4.scale(24.0,0.25,2.0));
+        wall_transform[wall_index] = Mat4.translation(0,24,0).times(Mat4.scale(24.0,0.25,wall_height));
         wall_index++;
-        wall_transform[wall_index] = Mat4.translation(0,-24,0).times(Mat4.scale(24.0,0.25,2.0));
+        wall_transform[wall_index] = Mat4.translation(0,-24,0).times(Mat4.scale(24.0,0.25,wall_height));
         wall_index++;
-        wall_transform[wall_index] = Mat4.translation(24,0,0).times(Mat4.scale(0.25,24.0,2.0));
+        wall_transform[wall_index] = Mat4.translation(24,0,0).times(Mat4.scale(0.25,24.0,wall_height));
         wall_index++;
-        wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.25,24.0,2.0));
+        wall_transform[wall_index] = Mat4.translation(-24,0,0).times(Mat4.scale(0.25,24.0,wall_height));
         
         
         this.shapes.border1.arrays.texture_coord.forEach((v,i,l) => v[0] = v[0] * 6);
