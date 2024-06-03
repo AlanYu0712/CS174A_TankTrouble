@@ -128,6 +128,46 @@ class Background extends Shape { //triangle strip cubes for walls and ground
     }
 }
 
+class Grass extends Shape {
+    constructor() {
+        super("position", "normal");
+        this.arrays.position = Vector3.cast(
+            [0.4, -0.8, 0], [0.65, -0.8, 3], [0.9,-0.8,0],
+            [0.1, -0.9, 0], [-0.2, -0.9, 3], [-0.5,-0.9,0],
+            [-0.7, -1, 0], [-0.85, -0.8, 3], [-1,-0.6,0],
+            [-0.8, -0.5, 0], [-0.7, -0.2, 3], [-0.6,0.1,0],
+            [0, -0.7, 0], [0.4, -0.4, 3], [0.8,-0.1,0],
+            [0, -0.3, 0], [-0.15, -0.15, 3], [-0.3,0,0],
+            [1, 0, 0], [0.6, 0.1, 3], [0.2,0.2,0],
+            [0.9, 0.2, 0], [0.9, 0.3, 3], [0.9,0.4,0],
+            [-0.7, 0.1, 0], [-0.4, 0.2, 3], [-0.1,0.3,0],
+            [0.1, 0.3, 0], [0.9, 0.45, 3], [0.8,0.6,0],
+            [0.5, 0.5, 0], [0.5, 0.7, 3], [0.5,0.9,0],
+            [0, 0.5, 0], [0, 0.65, 3], [0,0.8,0],
+            [-0.7, 0.7, 0], [-0.65, 0.85, 3], [-0.6,1,0],
+            [-0.8, 0.5, 0], [-0.9, 0.65, 3], [-1,0.8,0]
+        );
+        this.arrays.normal = Vector3.cast(
+            [0.4, -0.8, 0], [0.65, -0.8, 3], [0.9,-0.8,0],
+            [0.1, -0.9, 0], [-0.2, -0.9, 3], [-0.5,-0.9,0],
+            [-0.7, -1, 0], [-0.85, -0.8, 3], [-1,-0.6,0],
+            [-0.8, -0.5, 0], [-0.7, -0.2, 3], [-0.6,0.1,0],
+            [0, -0.7, 0], [0.4, -0.4, 3], [0.8,-0.1,0],
+            [0, -0.3, 0], [-0.15, -0.15, 3], [-0.3,0,0],
+            [1, 0, 0], [0.6, 0.1, 3], [0.2,0.2,0],
+            [0.9, 0.2, 0], [0.9, 0.3, 3], [0.9,0.4,0],
+            [-0.7, 0.1, 0], [-0.4, 0.2, 3], [-0.1,0.3,0],
+            [0.1, 0.3, 0], [0.9, 0.45, 3], [0.8,0.6,0],
+            [0.5, 0.5, 0], [0.5, 0.7, 3], [0.5,0.9,0],
+            [0, 0.5, 0], [0, 0.65, 3], [0,0.8,0],
+            [-0.7, 0.7, 0], [-0.65, 0.85, 3], [-0.6,1,0],
+            [-0.8, 0.5, 0], [-0.9, 0.65, 3], [-1,0.8,0]
+        );
+        this.indices.push(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+                         31,32,33,34,35,36,37,38,39,40,41);
+    }
+}
+
 const Flat_Shaded_Cube = defs.Flat_Shaded_Cube =
     class Flat_Shaded_Cube extends (defs.Cube.prototype.make_flat_shaded_version()) {}
 
@@ -258,7 +298,7 @@ export class Game extends Scene {
             p1: new Tank(Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
             p2: new Tank(Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
             box: new Cube(),
-            
+            bush: new Grass(),
         };
 
         // *** Materials
@@ -299,6 +339,9 @@ export class Game extends Scene {
                 
             powerup: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 1, color: hex_color("#FFFF00")}),
+
+            grass: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 1, color: hex_color("#7CFC00")})
         }
 
         // changed camera angle to be more perspective - Nathan
@@ -417,7 +460,9 @@ export class Game extends Scene {
         
         // generate ground for the stage - Nathan
         let floor_transform = Mat4.scale(24.0,24.0,0.2).times(Mat4.translation(0, 0, -1.0));
-        //this.shapes.border.draw(context, program_state, Mat4.translation(0, 0, 3.0), this.materials.wall);
+        this.shapes.bush.draw(context, program_state, Mat4.translation(1, 1, 0).times(Mat4.scale(2.0,2.0,1.0)), this.materials.grass);
+        this.shapes.bush.draw(context, program_state, Mat4.translation(1, 1, 0).times(Mat4.scale(2.0,2.0,1.0).times(Mat4.rotation(Math.PI/2,0,0,1))), this.materials.grass);
+        this.shapes.bush.draw(context, program_state, Mat4.translation(1, 1, 0).times(Mat4.scale(2.0,2.0,1.0).times(Mat4.rotation(Math.PI,0,0,1))), this.materials.grass);
         this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[0] = v[0] * 4);
         this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[1] = v[1] * 4);
         this.shapes.floor.draw(context, program_state, floor_transform, this.materials.ground);
