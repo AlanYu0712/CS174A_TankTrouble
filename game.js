@@ -990,6 +990,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p2_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
@@ -1008,6 +1014,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p1_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
@@ -1079,6 +1091,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p1_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
@@ -1098,6 +1116,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p2_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
@@ -1167,6 +1191,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p2_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
@@ -1185,6 +1215,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p1_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
@@ -1254,6 +1290,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p1_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
@@ -1273,6 +1315,12 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.generate_walls();
                     if (this.p2_life > 0){
+                        this.p1_bullet_cnt = 5;
+                        this.p2_bullet_cnt = 5;
+                        this.p1_bullets = [];
+                        this.p2_bullets = [];
+                        this.p1_shotgun_bullets = [];
+                        this.p2_shotgun_bullets = [];
                         this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                         this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
