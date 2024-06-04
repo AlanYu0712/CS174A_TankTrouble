@@ -476,6 +476,78 @@ export class Game extends Scene {
         return (bullet_l < wall_r && bullet_r > wall_l && bullet_b < wall_t && bullet_t > wall_b);
     }
 
+    tank_wall_collision_calc(tank_x, tank_y, tank_rot, wall_x, wall_y, wall_len, wall_wid) {
+        // treat the bullet like it has a cube around it
+        // pre-calculate some values
+        let tank_half_length = 1;
+        let tank_half_width = 1;
+
+        // Calculate cosine and sine of tank's rotation angle
+        let cos_theta = Math.cos(tank_rot);
+        let sin_theta = Math.sin(tank_rot);
+
+        // Define tank's vertices relative to its center
+        let tank_vertices = [
+            [-tank_half_length, -tank_half_width],  // Top-left
+            [tank_half_length, -tank_half_width],   // Top-right
+            [tank_half_length, tank_half_width],    // Bottom-right
+            [-tank_half_length, tank_half_width]    // Bottom-left
+        ];
+
+        // Rotate tank's vertices
+        let rotated_tank_vertices = tank_vertices.map(([x, y]) => [
+            x * cos_theta - y * sin_theta + tank_x,
+            x * sin_theta + y * cos_theta + tank_y
+        ]);
+
+        // Calculate tank's bounding box after rotation
+        let tank_l = Math.min(...rotated_tank_vertices.map(([x, _]) => x));
+        let tank_r = Math.max(...rotated_tank_vertices.map(([x, _]) => x));
+        let tank_t = Math.max(...rotated_tank_vertices.map(([_, y]) => y));
+        let tank_b = Math.min(...rotated_tank_vertices.map(([_, y]) => y));
+
+
+        let wall_l = wall_x - wall_wid;
+        let wall_r = wall_x + wall_wid;
+        let wall_t = wall_y + wall_len;
+        let wall_b = wall_y - wall_len;
+
+        return (tank_l < wall_r && tank_r > wall_l && tank_b < wall_t && tank_t > wall_b);
+    }
+
+    //3.0;2.4
+    tank_wall_collision(tank1_x, tank1_y, tank1_rot,tank2_x, tank2_y,v_walls,borderV,h_walls,borderH){
+        let moveable = true;
+
+
+        v_walls.forEach((wall) => {
+            if (this.tank_wall_collision_calc(tank1_x, tank1_y, tank1_rot, wall[0], wall[1], 4.0, 0.15)) {
+                moveable = false;
+            }
+        })
+        borderV.forEach((wall) => {
+            if (this.tank_wall_collision_calc(tank1_x, tank1_y, tank1_rot, wall[0], wall[1], 24.0, 0.15)) {
+                moveable = false;
+            }
+        })
+        h_walls.forEach((wall) => {
+            if (this.tank_wall_collision_calc(tank1_x, tank1_y, tank1_rot, wall[0], wall[1], 0.15, 4.0)) {
+                moveable = false;
+            }
+        })
+        borderH.forEach((wall) => {
+            if (this.tank_wall_collision_calc(tank1_x, tank1_y, tank1_rot, wall[0], wall[1], 0.15, 24.0)) {
+                moveable = false;
+            }
+        })
+        // check collision for both self and opponent tank
+        if (this.tank_wall_collision_calc(tank1_x, tank1_y, tank1_rot, tank2_x, tank2_y, 1.5, 1.2)) {
+            moveable = false;
+        }
+        
+        return moveable;
+    }
+
     areVectorsEqual(vec1, vec2) {
         if (vec1.length !== vec2.length) 
             return false;
@@ -638,17 +710,46 @@ export class Game extends Scene {
 
 
         //TANK
-        //Tank P1
-        if (this.p1_life == 1) {
+        //Tank P1w
+        if (this.p1_life == 1 ) {
             if (this.p1_move_forward){
-                this.shapes.p1.position = this.shapes.p1.position.times(Mat4.translation(this.tank_move_speed,0,0));
+                let new_position = this.shapes.p1.position.times(Mat4.translation(this.tank_move_speed,0,0));
+                let new_x = new_position[0][3];
+                let new_y = new_position[1][3];
+                let moveable = this.tank_wall_collision(new_x,new_y,this.p1_rot,this.p2_x,this.p2_y,
+                                                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+                if(moveable){
+                    this.shapes.p1.position = new_position;
+                }
+                
             }else if (this.p1_move_backward){
-                this.shapes.p1.position = this.shapes.p1.position.times(Mat4.translation(-this.tank_move_speed,0,0));
+                let new_position = this.shapes.p1.position.times(Mat4.translation(-this.tank_move_speed,0,0));
+                let new_x = new_position[0][3];
+                let new_y = new_position[1][3];
+                let moveable = this.tank_wall_collision(new_x,new_y,this.p1_rot,this.p2_x,this.p2_y,
+                                                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+                if(moveable){
+                    this.shapes.p1.position = new_position;
+                }
             } 
             if (this.p1_rot_left){
-                this.shapes.p1.position = this.shapes.p1.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p1.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+                let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
+                let moveable = this.tank_wall_collision(this.p1_x,this.p1_y,new_rot,this.p2_x,this.p2_y,
+                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+
+                if(moveable){
+                    this.shapes.p1.position = new_position;
+                }
             }else if (this.p1_rot_right){
-                this.shapes.p1.position = this.shapes.p1.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p1.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+                let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
+                let moveable = this.tank_wall_collision(this.p1_x,this.p1_y,new_rot,this.p2_x,this.p2_y,
+                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+                    
+                if(moveable){
+                    this.shapes.p1.position = new_position;
+                }
             }
             this.shapes.p1.draw(context, program_state, this.shapes.p1.position, this.materials.tank1_mat);
             this.p1_x = this.shapes.p1.x;
@@ -659,19 +760,47 @@ export class Game extends Scene {
         //Tank P2
         if (this.p2_life == 1) {
             if (this.p2_move_forward){
-                this.shapes.p2.position = this.shapes.p2.position.times(Mat4.translation(this.tank_move_speed,0,0));
+                let new_position = this.shapes.p2.position.times(Mat4.translation(this.tank_move_speed,0,0));
+                let new_x = new_position[0][3];
+                let new_y = new_position[1][3];
+                let moveable = this.tank_wall_collision(new_x,new_y,this.p2_rot,this.p1_x,this.p1_y,
+                                                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+                if(moveable){
+                    this.shapes.p2.position = new_position;
+                }
             }else if (this.p2_move_backward){
-                this.shapes.p2.position = this.shapes.p2.position.times(Mat4.translation(-this.tank_move_speed,0,0));
+                let new_position = this.shapes.p2.position.times(Mat4.translation(-this.tank_move_speed,0,0));
+                let new_x = new_position[0][3];
+                let new_y = new_position[1][3];
+                let moveable = this.tank_wall_collision(new_x,new_y,this.p2_rot,this.p1_x,this.p1_y,
+                                                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+                if(moveable){
+                    this.shapes.p2.position = new_position;
+                }
             } 
             if (this.p2_rot_left){
-                this.shapes.p2.position = this.shapes.p2.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p2.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+                let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
+                let moveable = this.tank_wall_collision(this.p2_x,this.p2_y,new_rot,this.p1_x,this.p1_y,
+                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+
+                if(moveable){
+                    this.shapes.p2.position = new_position;
+                }
             }else if (this.p2_rot_right){
-                this.shapes.p2.position = this.shapes.p2.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p2.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+                let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
+                let moveable = this.tank_wall_collision(this.p2_x,this.p2_y,new_rot,this.p1_x,this.p1_y,
+                    this.v_walls,this.borderV,this.h_walls,this.borderH);
+
+                if(moveable){
+                    this.shapes.p2.position = new_position;
+                }
             }
-            this.shapes.p2.draw(context, program_state, this.shapes.p2.position, this.materials.tank2_mat);
             this.p2_x = this.shapes.p2.x;
             this.p2_y = this.shapes.p2.y;
             this.p2_rot = this.shapes.p2.r;
+            this.shapes.p2.draw(context, program_state, this.shapes.p2.position, this.materials.tank2_mat);
         }
 
         //Third Person perspective
