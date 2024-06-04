@@ -222,6 +222,8 @@ export class Game extends Scene {
         this.borderH = [];
         const outline = [60,61,62,63];
         const maze_1 = [60,61,62,63,1,3,36,38,41,11,18,48,51,53,26,28];
+        const maze_2 = [60,61,62,63,31,32,33,34,36,37,40,41,43,44,45,46,48,49,52,53,55,56,57,58];
+        const maze_3 = [60,61,62,63,30,31,32,33,34,40,14,15,49,55,56,57,58,59];
         this.walls_to_add = outline;
         const num_walls = 20;
         for (let i = 0; i<num_walls; i++){
@@ -236,6 +238,8 @@ export class Game extends Scene {
         this.grass_to_add = [];
         const num_grass = 5;
         const grass_1 = [20,21,14,15,19,26,9,16];
+        const grass_2 = [25,26,27,28,18,19,16,17,7,8,9,10];
+        const grass_3 = [9,12,14,21,23,26];
         for (let i = 0; i<num_grass; i++){
             this.grass_to_add = this.grass_to_add.concat(Math.floor(Math.random() * 35))
         }
@@ -244,6 +248,8 @@ export class Game extends Scene {
         this.timer = 0;
         this.powerups = [];
         const powerups_1 = [25,10];
+        const powerups_2 = [12,23];
+        const powerups_3 = [24,11];
         const num_powerups = 2;
         this.powerup_pos = [];
         for (let i = 0; i<num_powerups; i++){
@@ -263,14 +269,46 @@ export class Game extends Scene {
 
         this.generate_map_1 = () => {
             this.walls_to_add = maze_1;
-            
             this.grass_to_add = grass_1;
-            
             this.powerups = [];
             this.powerup_pos = powerups_1;
-            
             this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1));
             this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+        }
+
+        this.generate_map_2 = () => {
+            this.walls_to_add = maze_2;
+            this.grass_to_add = grass_2;
+            this.powerups = [];
+            this.powerup_pos = powerups_2;
+            this.shapes.p1.position = Mat4.identity().times(Mat4.translation(0, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(-Math.PI/2,0,0,1));
+            this.shapes.p2.position = Mat4.identity().times(Mat4.translation(0, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI/2,0,0,1));
+        }
+
+        this.generate_map_3 = () => {
+            this.walls_to_add = maze_3;
+            this.grass_to_add = grass_3;
+            this.powerups = [];
+            this.powerup_pos = powerups_3;
+            this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1));
+            this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+        }
+
+        this.pick_premade_map = () => {
+            let map_num = Math.floor(Math.random() * 3)+1;
+            switch(map_num){
+                case 1:
+                    this.generate_map_1();
+                    break;
+                case 2:
+                    this.generate_map_2();
+                    break;
+                case 3:
+                    this.generate_map_3();
+                    break;
+                default:
+                    this.generate_walls();
+            }
         }
 
         this.generate_walls = () => {
@@ -430,8 +468,8 @@ export class Game extends Scene {
         this.key_triggered_button("P2 Tank Backward", ["l"], ()=>{this.p2_move_backward = true},undefined,()=>{this.p2_move_backward=false});
         this.key_triggered_button("P2 Tank Rotate Left", ["k"], ()=>{this.p2_rot_left = true},undefined,()=>{this.p2_rot_left=false});
         this.key_triggered_button("P2 Tank Rotate Right", [";"], ()=>{this.p2_rot_right = true},undefined,()=>{this.p2_rot_right=false});
-        this.key_triggered_button("P2 Shoot bullet", ["["], () => this.shootBulletp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
-        this.key_triggered_button("Use Special", ["]"], () => this.shootShotgunp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
+        this.key_triggered_button("P2 Shoot bullet", ["n"], () => this.shootBulletp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
+        this.key_triggered_button("Use Special", ["m"], () => this.shootShotgunp2(this.p2_x + 1.8*Math.cos(this.p2_rot), this.p2_y + 1.8*Math.sin(this.p2_rot), this.p2_rot));
         
         this.new_line();
         this.new_line();
@@ -449,13 +487,15 @@ export class Game extends Scene {
         this.new_line();
 
         //Map Generation
-        this.key_triggered_button("Random Map", ["m"], () => this.generate_walls());
+        this.key_triggered_button("Randomly generated Map", ["["], () => this.generate_walls());
+        this.new_line();
+        this.key_triggered_button("Randomly pre-made Map", ["]"], () => this.pick_premade_map());
         this.new_line();
         this.key_triggered_button("Map one", ["5"], ()=> this.generate_map_1());
         this.new_line();
-        //this.key_triggered_button("Map two", ["6"], ()=> this.this.generate_map_2());
+        this.key_triggered_button("Map two", ["6"], ()=> this.generate_map_2());
         this.new_line();
-        //this.key_triggered_button("Map three", ["7"], ()=> this.this.generate_map_3());
+        this.key_triggered_button("Map three", ["7"], ()=> this.generate_map_3());
     }
 
     p1_explosion(position) {
@@ -618,7 +658,7 @@ export class Game extends Scene {
             for (let x = -3; x<3; x++){
                 var base = []
                 for (let i = 0; i<4; i++){
-                    base[i] = Mat4.translation(8*x, 8*y, 0).times(Mat4.scale(4.0,4.0,1.0)).times(Mat4.translation(1,1,0)).times(Mat4.rotation(i*Math.PI/2.0,0,0,1));
+                    base[i] = Mat4.translation(8*x, 8*y, 0).times(Mat4.scale(4.0,4.0,1.5)).times(Mat4.translation(1,1,0)).times(Mat4.rotation(i*Math.PI/2.0,0,0,1));
                 }
                 grasses[grass_index] = base;
                 grass_index++;
@@ -988,7 +1028,7 @@ export class Game extends Scene {
                 this.p1_shotgun_bullets.splice(i, 1);
                 this.p1_bullet_cnt += 1;
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p2_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -996,8 +1036,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
             }
@@ -1012,7 +1052,7 @@ export class Game extends Scene {
                 this.p1_shotgun_bullets.splice(i, 1);
                 this.p1_bullet_cnt += 1;
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p1_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -1020,8 +1060,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
             }
@@ -1089,7 +1129,7 @@ export class Game extends Scene {
                 this.p2_shotgun_bullets.splice(i, 1);
                 this.p2_bullet_cnt += 1;
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p1_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -1097,8 +1137,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
                
@@ -1114,7 +1154,7 @@ export class Game extends Scene {
                 this.p2_shotgun_bullets.splice(i, 1);
                 this.p2_bullet_cnt += 1;
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p2_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -1122,8 +1162,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
             }
@@ -1189,7 +1229,7 @@ export class Game extends Scene {
                 this.p1_bullets.splice(i, 1);
                 this.p1_bullet_cnt += 1;
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p2_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -1197,8 +1237,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
             }
@@ -1213,7 +1253,7 @@ export class Game extends Scene {
                 this.p1_bullets.splice(i, 1);
                 this.p1_bullet_cnt += 1;
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p1_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -1221,8 +1261,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
             }
@@ -1288,7 +1328,7 @@ export class Game extends Scene {
                 this.p2_bullets.splice(i, 1);
                 this.p2_bullet_cnt += 1;
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p1_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -1296,8 +1336,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
             }
@@ -1313,7 +1353,7 @@ export class Game extends Scene {
                 this.p2_bullet_cnt += 1;
                 console.log("p2 life:" + this.p2_life);
                 setTimeout(() => { 
-                    this.generate_walls();
+                    this.pick_premade_map();
                     if (this.p2_life > 0){
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
@@ -1321,8 +1361,8 @@ export class Game extends Scene {
                         this.p2_bullets = [];
                         this.p1_shotgun_bullets = [];
                         this.p2_shotgun_bullets = [];
-                        this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
-                        this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
+                        //this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
                     }
                  }, this.round_refresh_t);
             }
