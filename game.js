@@ -177,7 +177,7 @@ export class Game extends Scene {
         super();
 
         //Round
-        this.round_refresh_t = 2000;
+        this.round_refresh_t = 4000;
 
         //Life Box
         this.balloon_offset = 3.25; // Adjust this value to position the balloon above the tank
@@ -297,19 +297,21 @@ export class Game extends Scene {
             if (this.p1_bullet_cnt != 0 && this.p1_life >0) {
                 this.p1_bullets.push(new Bullet(x, y, rot));
                 this.p1_bullet_cnt -= 1;
-                this.soundEffects.shoot.play();
+                const newSound = this.soundEffects.shoot.cloneNode();
+                newSound.play();
             }
         }
         // Add a shoot special function for shotgun where you store 5 bullets immediately and then toggle shotgun mode off
         this.shootShotgunp1 = (x, y, rot) => {
-            if (this.p1_shotgun_mode == 1) {
+            if (this.p1_shotgun_mode == 1 && this.p1_life > 0) {
                 this.p1_shotgun_mode = 0;
                 this.p1_shotgun_bullets.push(new Bullet(x, y, rot));
                 this.p1_shotgun_bullets.push(new Bullet(x, y, rot + 0.26));
                 this.p1_shotgun_bullets.push(new Bullet(x, y, rot - 0.26));
                 this.p1_shotgun_bullets.push(new Bullet(x, y, rot + 0.52));
                 this.p1_shotgun_bullets.push(new Bullet(x, y, rot - 0.52));
-                this.soundEffects.shotgun_shoot.play();
+                const newSound = this.soundEffects.shotgun_shoot.cloneNode();
+                newSound.play();
             }
         }
 
@@ -317,19 +319,21 @@ export class Game extends Scene {
             if (this.p2_bullet_cnt != 0 && this.p2_life > 0) {
                 this.p2_bullets.push(new Bullet(x, y, rot));
                 this.p2_bullet_cnt -= 1;
-                this.soundEffects.shoot.play();
+                const newSound = this.soundEffects.shoot.cloneNode();
+                newSound.play();
             }
         }
 
         this.shootShotgunp2 = (x, y, rot) => {
-            if (this.p2_shotgun_mode == 1) {
+            if (this.p2_shotgun_mode == 1 && this.p2_life > 0) {
                 this.p2_shotgun_mode = 0;
                 this.p2_shotgun_bullets.push(new Bullet(x, y, rot));
                 this.p2_shotgun_bullets.push(new Bullet(x, y, rot + 0.26));
                 this.p2_shotgun_bullets.push(new Bullet(x, y, rot - 0.26));
                 this.p2_shotgun_bullets.push(new Bullet(x, y, rot + 0.52));
                 this.p2_shotgun_bullets.push(new Bullet(x, y, rot - 0.52));
-                this.soundEffects.shotgun_shoot.play();
+                const newSound = this.soundEffects.shotgun_shoot.cloneNode();
+                newSound.play();
             }
         }
 
@@ -455,7 +459,8 @@ export class Game extends Scene {
     }
 
     p1_explosion(position) {
-        this.soundEffects.explode.play();
+        const newSound = this.soundEffects.explode.cloneNode();
+        newSound.play();
         const num_particles = 100;
         for (let i = 0; i < num_particles; i++) {
           const velocity = vec(Math.random() - 0.5, Math.random(), Math.random() - 0.5).normalized().times(5); // Random direction
@@ -468,7 +473,8 @@ export class Game extends Scene {
     }
 
     p2_explosion(position) {
-        this.soundEffects.explode.play();
+        const newSound = this.soundEffects.explode.cloneNode();
+        newSound.play();
         const num_particles = 100;
         for (let i = 0; i < num_particles; i++) {
           const velocity = vec(Math.random() - 0.5, Math.random(), Math.random() - 0.5).normalized().times(5); // Random direction
@@ -909,7 +915,8 @@ export class Game extends Scene {
                 // if num == 0 the activate whatever else 
                 this.powerups.splice(i, 1);
                 this.p1_shotgun_mode = 1;
-                this.soundEffects.shotgun.play();
+                const newSound = this.soundEffects.shotgun.cloneNode();
+                newSound.play();
                 // handle powerup for player1
             }
             else if (this.bullet_wall_collision(this.powerups[i].x, this.powerups[i].y, 1.0, this.p2_x, this.p2_y, 0.8, 0.8)) {
@@ -918,7 +925,8 @@ export class Game extends Scene {
                 // if num == 0 the activate whatever else 
                 this.powerups.splice(i, 1);
                 this.p2_shotgun_mode = 1;
-                this.soundEffects.shotgun.play();
+                const newSound = this.soundEffects.shotgun.cloneNode();
+                newSound.play();
                 // handle powerup for player2
             }
             else {
@@ -943,31 +951,37 @@ export class Game extends Scene {
             this.v_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
                     this.p1_shotgun_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderV.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
                     this.p1_shotgun_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.h_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
                     this.p1_shotgun_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderH.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
                     this.p1_shotgun_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
-            // check collision for both self and opponent tank
+            // check collision for both self and opponent tank (RESET EVERYTHING)
             if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
                 this.p2_explosion(vec(this.p2_x, this.p2_y, 0));
                 this.p2_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p2_y = 100;
                 this.shapes.p2.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
@@ -984,6 +998,8 @@ export class Game extends Scene {
             else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
                 this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
                 this.p1_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p1_y = 100;
                 this.shapes.p1.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
@@ -1024,31 +1040,37 @@ export class Game extends Scene {
             this.v_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
                     this.p2_shotgun_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderV.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
                     this.p2_shotgun_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.h_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
                     this.p2_shotgun_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderH.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
                     this.p2_shotgun_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             // check collision for both self and opponent tank
             if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
                 this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
                 this.p1_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p1_y = 100;
                 this.shapes.p1.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
@@ -1066,6 +1088,8 @@ export class Game extends Scene {
             else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
                 this.p2_explosion(vec(this.p2_x, this.p2_y, 0));
                 this.p2_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p2_y = 100;
                 this.shapes.p2.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
@@ -1104,31 +1128,37 @@ export class Game extends Scene {
             this.v_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
                     this.p1_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderV.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
                     this.p1_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.h_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
                     this.p1_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderH.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
                     this.p1_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             // check collision for both self and opponent tank
             if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
                 this.p2_explosion(vec(this.p2_x, this.p2_y, 0));
                 this.p2_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p2_y = 100;
                 this.shapes.p2.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
@@ -1145,6 +1175,8 @@ export class Game extends Scene {
             else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
                 this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
                 this.p1_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p1_y = 100;
                 this.shapes.p1.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
@@ -1183,31 +1215,37 @@ export class Game extends Scene {
             this.v_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 4.0, 0.15)) {
                     this.p2_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderV.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 24.0, 0.15)) {
                     this.p2_bullets[i].change_rot(Math.PI);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.h_walls.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 4.0)) {
                     this.p2_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             this.borderH.forEach((wall) => {
                 if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, wall[0], wall[1], 0.15, 24.0)) {
                     this.p2_bullets[i].change_rot(0);
-                    this.soundEffects.bounce.play();
+                    const newSound = this.soundEffects.bounce.cloneNode();
+                    newSound.play();
                 }
             })
             // check collision for both self and opponent tank
             if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p1_x, this.p1_y, 0.6, 0.6)) {
                 this.p1_explosion(vec(this.p1_x, this.p1_y, 0));
                 this.p1_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p1_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p1_y = 100;
                 this.shapes.p1.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
@@ -1224,6 +1262,8 @@ export class Game extends Scene {
             else if (this.bullet_wall_collision(curBullet.x, curBullet.y, curBullet.rad, this.p2_x, this.p2_y, 0.6, 0.6)) {
                 this.p2_explosion(vec(this.p2_x, this.p2_y, 0)); 
                 this.p2_life -= 1;
+                this.p2_shotgun_mode = 0;
+                this.p1_shotgun_mode = 0;
                 this.p2_x = 100;   // setting x and y to go away from the stage so that it doesnt interfere with remaining bullets
                 this.p2_y = 100;
                 this.shapes.p2.position = Mat4.identity().times(Mat4.translation(100, 100, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
