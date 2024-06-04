@@ -213,15 +213,35 @@ export class Game extends Scene {
         this.borderV = [];
         this.borderH = [];
         const outline = [60,61,62,63];
+        const maze_1 = [60,61,62,63,1,3,36,38,41,11,18,48,51,53,26,28];
         this.walls_to_add = outline;
+        const num_walls = 20;
+        for (let i = 0; i<num_walls; i++){
+            this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
+        }
 
         this.particles1 = [];
         this.particles2 = [];
         this.gravity = vec(0, -13.0, 0);
 
+        //Grass
+        this.grass_to_add = [];
+        const num_grass = 5;
+        const grass_1 = [20,21,14,15,19,26,9,16];
+        for (let i = 0; i<num_grass; i++){
+            this.grass_to_add = this.grass_to_add.concat(Math.floor(Math.random() * 35))
+        }
+        
         // powerups
         this.timer = 0;
         this.powerups = [];
+        const powerups_1 = [25,10];
+        const num_powerups = 2;
+        this.powerup_pos = [];
+        for (let i = 0; i<num_powerups; i++){
+            this.powerup_pos = this.powerup_pos.concat(Math.floor(Math.random() * 35))
+        }
+        
 
         this.soundEffects = {
             score: new Audio('assets/ittybitty.mp3'),
@@ -233,15 +253,36 @@ export class Game extends Scene {
         }
         this.soundEffects.score.volume = 0.2;
 
-        for (let i = 0; i<20; i++){
-            this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
+        this.generate_map_1 = () => {
+            this.walls_to_add = maze_1;
+            
+            this.grass_to_add = grass_1;
+            
+            this.powerups = [];
+            this.powerup_pos = powerups_1;
+            
+            this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1));
+            this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
         }
 
         this.generate_walls = () => {
             this.walls_to_add = outline;
-            for (let i = 0; i<20; i++){
+            for (let i = 0; i<num_walls; i++){
                 this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
             }
+            
+            this.grass_to_add = [];
+            for (let i = 0; i<num_grass; i++){
+                this.grass_to_add = this.grass_to_add.concat(Math.floor(Math.random() * 35))
+            }
+            this.powerups = [];
+            this.powerup_pos = [];
+            for (let i = 0; i<num_powerups; i++){
+                this.powerup_pos = this.powerup_pos.concat(Math.floor(Math.random() * 35))
+            }
+            
+            this.shapes.p1.position = Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1));
+            this.shapes.p2.position = Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5));
         }
 
         this.shootBulletp1 = (x, y, rot) => {
@@ -295,7 +336,7 @@ export class Game extends Scene {
             border1: new Cube(),
             border2: new Cube(),
             fence: new Cube(),
-            p1: new Tank(Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
+            p1: new Tank(Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1))),
             p2: new Tank(Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
             box: new Cube(),
             bush: new Grass(),
@@ -331,7 +372,7 @@ export class Game extends Scene {
             {ambient: 0.6, diffusivity: 1, color: hex_color('#FF0000'), specularity: 1, smoothness: 30}),
 
             tank1_mat: new Material(new defs.Phong_Shader(),
-                {ambient: 0.6, diffusivity: 1.0, color: hex_color("#454B1B"), specularity: 0}),
+                {ambient: 0.6, diffusivity: 1.0, color: hex_color("#50501B"), specularity: 0}),
                 
             
             tank2_mat: new Material(new defs.Phong_Shader(),
@@ -341,7 +382,7 @@ export class Game extends Scene {
                 {ambient: 0.8, diffusivity: 1, color: hex_color("#FFFF00")}),
 
             grass: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 1, color: hex_color("#7CFC00")})
+                {ambient: 0.5, diffusivity: 1, color: hex_color("#7CFC00")})
         }
 
         // changed camera angle to be more perspective - Nathan
@@ -349,10 +390,7 @@ export class Game extends Scene {
     }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.                                                                      
-        this.key_triggered_button("Generate map", ["m"], () => this.generate_walls()); //eventually change to random variable - Nathan
-        this.new_line();
-        this.new_line();
+        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.     
         //P1
         this.key_triggered_button("P1 Tank Forward", ["w"], ()=>{this.p1_move_forward = true},undefined,()=>{this.p1_move_forward=false});
         this.key_triggered_button("P1 Tank Backward", ["s"], ()=>{this.p1_move_backward = true},undefined,()=>{this.p1_move_backward=false});
@@ -383,6 +421,18 @@ export class Game extends Scene {
         this.key_triggered_button("P2 Third person persepctive", ["Control", "2"], ()=> this.camera_mode = 2);
         this.new_line();
         this.key_triggered_button("Top-down persepctive", ["Control", "3"], ()=> this.camera_mode = 3);
+
+        this.new_line();
+        this.new_line();
+
+        //Map Generation
+        this.key_triggered_button("Random Map", ["m"], () => this.generate_walls());
+        this.new_line();
+        this.key_triggered_button("Map one", ["5"], ()=> this.generate_map_1());
+        this.new_line();
+        //this.key_triggered_button("Map two", ["6"], ()=> this.this.generate_map_2());
+        this.new_line();
+        //this.key_triggered_button("Map three", ["7"], ()=> this.this.generate_map_3());
     }
 
     p1_explosion(position) {
@@ -460,12 +510,29 @@ export class Game extends Scene {
         
         // generate ground for the stage - Nathan
         let floor_transform = Mat4.scale(24.0,24.0,0.2).times(Mat4.translation(0, 0, -1.0));
-        this.shapes.bush.draw(context, program_state, Mat4.translation(1, 1, 0).times(Mat4.scale(2.0,2.0,1.0)), this.materials.grass);
-        this.shapes.bush.draw(context, program_state, Mat4.translation(1, 1, 0).times(Mat4.scale(2.0,2.0,1.0).times(Mat4.rotation(Math.PI/2,0,0,1))), this.materials.grass);
-        this.shapes.bush.draw(context, program_state, Mat4.translation(1, 1, 0).times(Mat4.scale(2.0,2.0,1.0).times(Mat4.rotation(Math.PI,0,0,1))), this.materials.grass);
         this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[0] = v[0] * 4);
         this.shapes.floor.arrays.texture_coord.forEach((v,i,l) => v[1] = v[1] * 4);
         this.shapes.floor.draw(context, program_state, floor_transform, this.materials.ground);
+    
+        //generate random patches of grass for the stage - Nathan
+        var grasses = []
+        var grass_index = 0;
+        for (let y = -3; y<3; y++){
+            for (let x = -3; x<3; x++){
+                var base = []
+                for (let i = 0; i<4; i++){
+                    base[i] = Mat4.translation(8*x, 8*y, 0).times(Mat4.scale(4.0,4.0,1.0)).times(Mat4.translation(1,1,0)).times(Mat4.rotation(i*Math.PI/2.0,0,0,1));
+                }
+                grasses[grass_index] = base;
+                grass_index++;
+            }
+        }
+        for (let i = 0; i<this.grass_to_add.length; i++){
+            for (let j = 0; j<4; j++){
+                this.shapes.bush.draw(context, program_state, grasses[this.grass_to_add[i]][j], this.materials.grass);
+            }
+        }
+
         
         // generate a couple walls for the stage - Nathan
         // 0-29 VERTICAL WALLS
@@ -622,8 +689,23 @@ export class Game extends Scene {
         }
 
         // POWERUPS spawn every 10 seconds
+        var power_coords = [];
+        var power_index = 0;
+        //Find every possible position a powerup can spawn at
+        for (let y = -20; y<21; y+=8){
+            for (let x = -20; x<21; x+=8){
+                power_coords[power_index] = [x, y];
+                power_index++;
+            }
+        }
+        //spawn the given powerup, chosen by a random variable, this.powerup_pos[0]
         if (this.timer == 600) {
-            this.powerups.push(new Powerup(0, 0)) // MAKE POWERUPS SPAWN IN RANDOM LOCATIONS, NOT (0,0)
+            let pos1 = power_coords[this.powerup_pos[0]][0];
+            let pos2 = power_coords[this.powerup_pos[0]][1];
+            let pos3 = power_coords[this.powerup_pos[1]][0];
+            let pos4 = power_coords[this.powerup_pos[1]][1];
+            this.powerups.push(new Powerup(pos1, pos2)); // MAKE POWERUPS SPAWN IN RANDOM LOCATIONS
+            this.powerups.push(new Powerup(pos3, pos4));
             this.timer = 0;
         }
         else
@@ -649,7 +731,7 @@ export class Game extends Scene {
                 // handle powerup for player2
             }
             else {
-                let pup_transform = model_transform.times(Mat4.scale(0.7,0.7,0.7)).times(Mat4.translation(this.powerups[i].x, this.powerups[i].y, 0.5*Math.sin(2*t) + 1.5));
+                let pup_transform = model_transform.times(Mat4.translation(this.powerups[i].x, this.powerups[i].y, 0.5*Math.sin(2*t) + 1.5)).times(Mat4.scale(0.7,0.7,0.7));
                 this.shapes.powerup.draw(context, program_state, pup_transform, this.materials.powerup);
             }
         }
