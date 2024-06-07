@@ -316,25 +316,25 @@ export class Game extends Scene {
         const maze_1 = [60,61,62,63,1,3,36,38,41,11,18,48,51,53,26,28];
         const maze_2 = [60,61,62,63,31,32,33,34,36,37,40,41,43,44,45,46,48,49,52,53,55,56,57,58];
         const maze_3 = [60,61,62,63,30,31,32,33,34,40,14,15,49,55,56,57,58,59];
-        this.walls_to_add = outline;
+        this.walls_to_add = outline.concat(maze_1);
         const num_walls = 20;
-        for (let i = 0; i<num_walls; i++){
-            this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
-        }
+        //for (let i = 0; i<num_walls; i++){
+            //this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
+        //}
 
         this.particles1 = [];
         this.particles2 = [];
         this.gravity = vec(0, -13.0, 0);
 
         //Grass
-        this.grass_to_add = [];
+        this.grass_to_add = [20,21,14,15,19,26,9,16];
         const num_grass = 5;
         const grass_1 = [20,21,14,15,19,26,9,16];
         const grass_2 = [25,26,27,28,18,19,16,17,7,8,9,10];
         const grass_3 = [9,12,14,21,23,26];
-        for (let i = 0; i<num_grass; i++){
-            this.grass_to_add = this.grass_to_add.concat(Math.floor(Math.random() * 35))
-        }
+        //for (let i = 0; i<num_grass; i++){
+            //this.grass_to_add = this.grass_to_add.concat(Math.floor(Math.random() * 35))
+        //}
         
         // powerups
         this.speed_timer = 4000;
@@ -344,12 +344,12 @@ export class Game extends Scene {
         const powerups_2 = [12,23];
         const powerups_3 = [24,11];
         const num_powerups = 2;
-        this.powerup_pos = [];
-        for (let i = 0; i<num_powerups; i++){
-            this.powerup_pos = this.powerup_pos.concat(Math.floor(Math.random() * 35))
-        }
+        this.powerup_pos = [25,10];
+        //for (let i = 0; i<num_powerups; i++){
+            //this.powerup_pos = this.powerup_pos.concat(Math.floor(Math.random() * 35))
+        //}
         
-
+        
         this.soundEffects = {
             score: new Audio('assets/ittybitty.mp3'),
             shoot: new Audio('assets/shoot.mp3'),
@@ -404,7 +404,7 @@ export class Game extends Scene {
                     this.generate_walls();
             }
         }
-
+        
         this.generate_walls = () => {
             this.walls_to_add = outline;
             for (let i = 0; i<num_walls; i++){
@@ -535,13 +535,15 @@ export class Game extends Scene {
             tank2_life_mat: new Material(new defs.Phong_Shader(),
                 {ambient: 0.6, diffusivity: 1.0, color: hex_color("#3d85c6"), specularity: 0}),
                 
-            powerup: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 1, color: hex_color("#FFFF00")}),
+            powerup: new Material(new Textured_Phong(),
+                {ambient: 1, diffusivity: 1, color: hex_color("#000000"),
+                texture: new Texture("assets/item.jpg")}),
 
-            speed: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 1, color: hex_color("#FF0000")}),
+            speed: new Material(new Textured_Phong(),
+                {ambient: 1, diffusivity: 1, color: hex_color("#000000"),
+                texture: new Texture("assets/item.jpg")}),
 
-            grass: new Material(new defs.Phong_Shader(),
+            grass: new Material(new Gouraud_Shader(),
                 {ambient: 0.5, diffusivity: 1, color: hex_color("#7CFC00")})
         }
 
