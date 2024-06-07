@@ -759,7 +759,7 @@ export class Game extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 2000)]; //changed to be a little brighter - Nathan 
         
         //Winning Page
-        let winning_page_transform = Mat4.identity().times(Mat4.scale(30.0,30.0,1)).times(Mat4.translation(0,0,3));
+        let winning_page_transform = Mat4.identity().times(Mat4.scale(30.0,30.0,1)).times(Mat4.translation(0,0,5));
         if(this.p2_life==0){
             this.shapes.winning_page.draw(context, program_state,winning_page_transform,this.materials.winning_mat_1);
         } else if (this.p1_life == 0){
