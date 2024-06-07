@@ -354,6 +354,7 @@ export class Game extends Scene {
             p2_lc_1: new Cube(),
             p2_lc_2: new Cube(),
             p2_lc_3: new Cube(),
+            winning_page: new Cube(),
         };
 
         // *** Materials
@@ -401,7 +402,17 @@ export class Game extends Scene {
                 {ambient: 0.8, diffusivity: 1, color: hex_color("#FFFF00")}),
 
             grass: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 1, color: hex_color("#7CFC00")})
+                {ambient: 0.5, diffusivity: 1, color: hex_color("#7CFC00")}),
+
+            winning_mat_1:new Material(new defs.Textured_Phong(),
+                {color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/p1_win.png")}) ,
+
+            winning_mat_2:new Material(new defs.Textured_Phong(),
+                {color: hex_color("#000000"),
+                ambient: 1, diffusivity: 0.1, specularity: 0.1,
+                texture: new Texture("assets/p2_win.png")}) 
         }
 
         // changed camera angle to be more perspective - Nathan
@@ -598,6 +609,16 @@ export class Game extends Scene {
         const light_position = vec4(0, 0, 100, 1); //changed to be higher - Nathan
         //const light_position = vec4(0, 0, 0, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 2000)]; //changed to be a little brighter - Nathan 
+        
+        //Winning Page
+        let winning_page_transform = Mat4.identity().times(Mat4.scale(30.0,30.0,1)).times(Mat4.translation(0,0,3));
+        if(this.p2_life==0){
+            this.shapes.winning_page.draw(context, program_state,winning_page_transform,this.materials.winning_mat_1);
+        } else if (this.p1_life == 0){
+            this.shapes.winning_page.draw(context, program_state,winning_page_transform,this.materials.winning_mat_2);
+        }
+        
+        
         
         // generate ground for the stage - Nathan
         let floor_transform = Mat4.scale(24.0,24.0,0.2).times(Mat4.translation(0, 0, -1.0));
