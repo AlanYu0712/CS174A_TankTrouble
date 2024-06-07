@@ -46,6 +46,13 @@ class Powerup {
     }
 }
 
+class Speed {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
 class Tank extends Shape{ //SHOOTS IN THE +X direction
     constructor(position){
         super("position", "normal",);
@@ -268,8 +275,10 @@ export class Game extends Scene {
         this.balloon_right_offset = -0.75;
         
         // Tank Speed
-        this.tank_move_speed = 0.12;
-        this.tank_rot_speed = 0.05;
+        this.tank1_move_speed = 0.12;
+        this.tank1_rot_speed = 0.05;
+        this.tank2_move_speed = 0.12;
+        this.tank2_rot_speed = 0.05;
 
         // player 1  
         this.p1_bullets = [];
@@ -328,6 +337,7 @@ export class Game extends Scene {
         }
         
         // powerups
+        this.speed_timer = 4000;
         this.timer = 0;
         this.powerups = [];
         const powerups_1 = [25,10];
@@ -347,6 +357,7 @@ export class Game extends Scene {
             explode: new Audio('assets/explosion.mp3'),
             shotgun: new Audio('assets/shotgun.mp3'),
             shotgun_shoot: new Audio('assets/shotgun_shoot.mp3'),
+            speedup: new Audio('assets/speedup.mp3')
         }
         this.soundEffects.score.volume = 0.2;
 
@@ -526,12 +537,14 @@ export class Game extends Scene {
                 
             powerup: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 1, color: hex_color("#FFFF00")}),
-            
-            grass: new Material(new Gouraud_Shader(),
-                {ambient: 0.9, diffusivity: 1, color: hex_color("#539024")}),
-            
+
+            speed: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 1, color: hex_color("#FF0000")}),
+
+            grass: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 1, color: hex_color("#7CFC00")})
         }
-        this.grass_colors = [hex_color("#485042"), hex_color("#406842"), hex_color("#485042"), hex_color("#406842")];
+
         // changed camera angle to be more perspective - Nathan
         this.initial_camera_location = Mat4.look_at(vec3(0, -45, 45), vec3(0, -3, 0), vec3(0, 1, 0));
     }
@@ -864,7 +877,7 @@ export class Game extends Scene {
         //Tank P1
         if (this.p1_life > 0 ) {
             if (this.p1_move_forward){
-                let new_position = this.shapes.p1.position.times(Mat4.translation(this.tank_move_speed,0,0));
+                let new_position = this.shapes.p1.position.times(Mat4.translation(this.tank1_move_speed,0,0));
                 let new_x = new_position[0][3];
                 let new_y = new_position[1][3];
                 let moveable = this.tank_wall_collision(new_x,new_y,this.p1_rot,this.p2_x,this.p2_y,
@@ -874,7 +887,7 @@ export class Game extends Scene {
                 }
                 
             }else if (this.p1_move_backward){
-                let new_position = this.shapes.p1.position.times(Mat4.translation(-this.tank_move_speed,0,0));
+                let new_position = this.shapes.p1.position.times(Mat4.translation(-this.tank1_move_speed,0,0));
                 let new_x = new_position[0][3];
                 let new_y = new_position[1][3];
                 let moveable = this.tank_wall_collision(new_x,new_y,this.p1_rot,this.p2_x,this.p2_y,
@@ -884,7 +897,7 @@ export class Game extends Scene {
                 }
             } 
             if (this.p1_rot_left){
-                let new_position = this.shapes.p1.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p1.position.times(Mat4.rotation(this.tank1_rot_speed,0,0,1));
                 let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
                 let moveable = this.tank_wall_collision(this.p1_x,this.p1_y,new_rot,this.p2_x,this.p2_y,
                     this.v_walls,this.borderV,this.h_walls,this.borderH);
@@ -893,7 +906,7 @@ export class Game extends Scene {
                     this.shapes.p1.position = new_position;
                 }
             }else if (this.p1_rot_right){
-                let new_position = this.shapes.p1.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p1.position.times(Mat4.rotation(-this.tank1_rot_speed,0,0,1));
                 let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
                 let moveable = this.tank_wall_collision(this.p1_x,this.p1_y,new_rot,this.p2_x,this.p2_y,
                     this.v_walls,this.borderV,this.h_walls,this.borderH);
@@ -933,7 +946,7 @@ export class Game extends Scene {
         //Tank P2
         if (this.p2_life > 0) {
             if (this.p2_move_forward){
-                let new_position = this.shapes.p2.position.times(Mat4.translation(this.tank_move_speed,0,0));
+                let new_position = this.shapes.p2.position.times(Mat4.translation(this.tank2_move_speed,0,0));
                 let new_x = new_position[0][3];
                 let new_y = new_position[1][3];
                 let moveable = this.tank_wall_collision(new_x,new_y,this.p2_rot,this.p1_x,this.p1_y,
@@ -942,7 +955,7 @@ export class Game extends Scene {
                     this.shapes.p2.position = new_position;
                 }
             }else if (this.p2_move_backward){
-                let new_position = this.shapes.p2.position.times(Mat4.translation(-this.tank_move_speed,0,0));
+                let new_position = this.shapes.p2.position.times(Mat4.translation(-this.tank2_move_speed,0,0));
                 let new_x = new_position[0][3];
                 let new_y = new_position[1][3];
                 let moveable = this.tank_wall_collision(new_x,new_y,this.p2_rot,this.p1_x,this.p1_y,
@@ -952,7 +965,7 @@ export class Game extends Scene {
                 }
             } 
             if (this.p2_rot_left){
-                let new_position = this.shapes.p2.position.times(Mat4.rotation(this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p2.position.times(Mat4.rotation(this.tank2_rot_speed,0,0,1));
                 let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
                 let moveable = this.tank_wall_collision(this.p2_x,this.p2_y,new_rot,this.p1_x,this.p1_y,
                     this.v_walls,this.borderV,this.h_walls,this.borderH);
@@ -961,7 +974,7 @@ export class Game extends Scene {
                     this.shapes.p2.position = new_position;
                 }
             }else if (this.p2_rot_right){
-                let new_position = this.shapes.p2.position.times(Mat4.rotation(-this.tank_rot_speed,0,0,1));
+                let new_position = this.shapes.p2.position.times(Mat4.rotation(-this.tank2_rot_speed,0,0,1));
                 let new_rot = Math.atan2(new_position[1][0],new_position[0][0]);
                 let moveable = this.tank_wall_collision(this.p2_x,this.p2_y,new_rot,this.p1_x,this.p1_y,
                     this.v_walls,this.borderV,this.h_walls,this.borderH);
@@ -1029,8 +1042,12 @@ export class Game extends Scene {
             let pos2 = power_coords[this.powerup_pos[0]][1];
             let pos3 = power_coords[this.powerup_pos[1]][0];
             let pos4 = power_coords[this.powerup_pos[1]][1];
+ 
             this.powerups.push(new Powerup(pos1, pos2)); // MAKE POWERUPS SPAWN IN RANDOM LOCATIONS
-            this.powerups.push(new Powerup(pos3, pos4));
+            this.powerups.push(new Speed(pos3, pos4));
+            console.log(pos1, pos2)
+            console.log(pos3, pos4)
+
             this.timer = 0;
         }
         else
@@ -1041,25 +1058,56 @@ export class Game extends Scene {
                 // let num = Math.floor(Math.random() * 1)
                 // if num == 1 then activate shotgun
                 // if num == 0 the activate whatever else 
+                if (this.powerups[i] instanceof Powerup) {
+                    this.p1_shotgun_mode = 1;
+                    const newSound = this.soundEffects.shotgun.cloneNode();
+                    newSound.play();
+                }
+                else {
+                    this.tank1_move_speed = 0.2;
+                    this.tank1_rot_speed = 0.08;
+                    const newSound = this.soundEffects.speedup.cloneNode();
+                    newSound.play();
+                    setTimeout(() => { 
+                        this.tank1_move_speed = 0.12;
+                        this.tank1_rot_speed = 0.05;
+                     }, this.speed_timer);
+                }
                 this.powerups.splice(i, 1);
-                this.p1_shotgun_mode = 1;
-                const newSound = this.soundEffects.shotgun.cloneNode();
-                newSound.play();
+    
                 // handle powerup for player1
             }
             else if (this.bullet_wall_collision(this.powerups[i].x, this.powerups[i].y, 1.0, this.p2_x, this.p2_y, 0.8, 0.8)) {
                 // let num = Math.floor(Math.random() * 1)
                 // if num == 1 then activate shotgun
                 // if num == 0 the activate whatever else 
+                if (this.powerups[i] instanceof Powerup) {
+                    this.p2_shotgun_mode = 1;
+                    const newSound = this.soundEffects.shotgun.cloneNode();
+                    newSound.play();
+                }
+                else {
+                    this.tank2_move_speed = 0.2;
+                    this.tank2_rot_speed = 0.08;
+                    const newSound = this.soundEffects.speedup.cloneNode();
+                    newSound.play();
+                    setTimeout(() => { 
+                        this.tank2_move_speed = 0.12;
+                        this.tank2_rot_speed = 0.05;
+                    }, this.speed_timer);
+                }
                 this.powerups.splice(i, 1);
-                this.p2_shotgun_mode = 1;
-                const newSound = this.soundEffects.shotgun.cloneNode();
-                newSound.play();
+                
                 // handle powerup for player2
             }
             else {
                 let pup_transform = model_transform.times(Mat4.translation(this.powerups[i].x, this.powerups[i].y, 0.5*Math.sin(2*t) + 1.5)).times(Mat4.scale(0.7,0.7,0.7));
-                this.shapes.powerup.draw(context, program_state, pup_transform, this.materials.powerup);
+                if (this.powerups[i] instanceof Powerup) {
+                    this.shapes.powerup.draw(context, program_state, pup_transform, this.materials.powerup);
+                }
+                else {
+                    this.shapes.powerup.draw(context, program_state, pup_transform, this.materials.speed);
+                }
             }
         }
 
@@ -1118,6 +1166,10 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.pick_premade_map();
                     if (this.p2_life > 0){
+                        this.tank1_move_speed = 0.12;
+                        this.tank1_rot_speed = 0.05;
+                        this.tank2_move_speed = 0.12;
+                        this.tank2_rot_speed = 0.05;
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
                         this.p1_bullets = [];
@@ -1142,6 +1194,10 @@ export class Game extends Scene {
                 setTimeout(() => { 
                     this.pick_premade_map();
                     if (this.p1_life > 0){
+                        this.tank1_move_speed = 0.12;
+                        this.tank1_rot_speed = 0.05;
+                        this.tank2_move_speed = 0.12;
+                        this.tank2_rot_speed = 0.05;
                         this.p1_bullet_cnt = 5;
                         this.p2_bullet_cnt = 5;
                         this.p1_bullets = [];
