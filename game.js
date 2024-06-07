@@ -316,7 +316,7 @@ export class Game extends Scene {
         const maze_1 = [60,61,62,63,1,3,36,38,41,11,18,48,51,53,26,28];
         const maze_2 = [60,61,62,63,31,32,33,34,36,37,40,41,43,44,45,46,48,49,52,53,55,56,57,58];
         const maze_3 = [60,61,62,63,30,31,32,33,34,40,14,15,49,55,56,57,58,59];
-        this.walls_to_add = outline.concat(maze_1);
+        this.walls_to_add = maze_1;
         const num_walls = 20;
         //for (let i = 0; i<num_walls; i++){
             //this.walls_to_add = this.walls_to_add.concat(Math.floor(Math.random() * 59))
