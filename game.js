@@ -112,6 +112,87 @@ class Tank extends Shape{ //SHOOTS IN THE +X direction
     }
 }
 
+class Tank_Outline extends Shape {
+    constructor() {
+        super("position", "color");
+        var tread_width = 0.8;
+        var tread_height = 0.4;
+        var turret_width = 0.5;
+        var barrel_width = 0.2;
+        
+        this.arrays.position = Vector3.cast(
+            [-0.8,-tread_width,-tread_height], [0.6,-tread_width,-tread_height], [-0.8,-tread_width,-1], [0.6,-tread_width,-1], //right tread
+            [-0.8, tread_width,-tread_height], [0.6, tread_width,-tread_height], [-0.8, tread_width,-1], [0.6, tread_width,-1], //left tread
+            [-0.8,-tread_width,-tread_height], [-0.8, tread_width,-tread_height], [0.6,-tread_width,-tread_height], [0.6, tread_width,-tread_height], 
+            [-0.8,-tread_width,-1], [-0.8, tread_width,-1], [0.6,-tread_width,-1], [0.6, tread_width,-1], 
+            
+            [-1,-tread_width,-0.6], [-0.8,-tread_width,-tread_height], [-1,-tread_width,-0.6], [-0.8,-tread_width,-1], 
+            [-1, tread_width,-0.6], [-0.8, tread_width,-tread_height], [-1, tread_width,-0.6], [-0.8, tread_width,-1], 
+            
+            [0.8,-tread_width,-0.6], [0.6,-tread_width,-tread_height], [0.8,-tread_width,-0.6], [0.6,-tread_width,-1], 
+            [0.8, tread_width,-0.6], [0.6, tread_width,-tread_height], [0.8, tread_width,-0.6], [0.6, tread_width,-1], 
+
+            [0.8,-tread_width,-0.6], [0.8, tread_width,-0.6], [-1,-tread_width,-0.6], [-1, tread_width,-0.6], 
+            /////////end of treads
+            
+            [-0.6,-turret_width,-tread_height], [-0.6,-turret_width, 0.2], [0.4,-turret_width, 0.2], [0.4,-turret_width,-tread_height], //turret 
+            [-0.6, turret_width,-tread_height], [-0.6, turret_width, 0.2], [0.4, turret_width, 0.2], [0.4, turret_width,-tread_height],
+            
+            [-0.6,-turret_width,-tread_height], [-0.6, turret_width,-tread_height], [-0.6,-turret_width, 0.2], [-0.6, turret_width, 0.2], 
+            [0.4,-turret_width, 0.2], [0.4, turret_width, 0.2], [0.4, turret_width,-tread_height], [0.4,-turret_width,-tread_height], //turret 
+            
+            [-0.6,-turret_width,-tread_height], [0.4,-turret_width,-tread_height], [-0.6,-turret_width, 0.2], [0.4,-turret_width, 0.2], //turret 
+            [-0.6, turret_width,-tread_height], [0.4, turret_width,-tread_height], [-0.6, turret_width, 0.2], [0.4, turret_width, 0.2], 
+            /////////end of turrent
+
+            [0.4,-barrel_width,-0.25], [0.4,-barrel_width, 0.1], [1.2,-barrel_width, 0.1], [1.2,-barrel_width,-0.25], //barrel
+            [0.4, barrel_width,-0.25], [0.4, barrel_width, 0.1], [1.2, barrel_width, 0.1], [1.2, barrel_width,-0.25],
+            
+            [0.4,-barrel_width,-0.25], [0.4, barrel_width,-0.25], [0.4,-barrel_width, 0.1], [0.4, barrel_width, 0.1], 
+            [1.2,-barrel_width, 0.1], [1.2, barrel_width, 0.1], [1.2,-barrel_width,-0.25], [1.2, barrel_width,-0.25], //barrel
+            
+            [0.4,-barrel_width,-0.25], [1.2,-barrel_width,-0.25], [0.4,-barrel_width, 0.1], [1.2,-barrel_width, 0.1], //barrel
+            [0.4, barrel_width,-0.25], [1.2, barrel_width,-0.25], [0.4, barrel_width, 0.1], [1.2, barrel_width, 0.1]
+        
+        );
+        this.arrays.color = Vector3.cast(
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            //end of treads
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            //end of turrent
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"),
+            
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"),
+        
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), 
+            hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff"), hex_color("#ffffff")
+        );
+        this.indices = false;
+    }
+}
+
 class Background extends Shape { //triangle strip cubes for walls and ground
     constructor() {
         super("position", "normal");
@@ -167,6 +248,8 @@ class Grass extends Shape {
                          31,32,33,34,35,36,37,38,39,40,41);
     }
 }
+
+
 
 const Flat_Shaded_Cube = defs.Flat_Shaded_Cube =
     class Flat_Shaded_Cube extends (defs.Cube.prototype.make_flat_shaded_version()) {}
@@ -387,7 +470,9 @@ export class Game extends Scene {
             border2: new Cube(),
             fence: new Cube(),
             p1: new Tank(Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1))),
+            p1_outline: new Tank_Outline(Mat4.identity().times(Mat4.translation(20, 20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1))),
             p2: new Tank(Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5))),
+            p2_outline: new Tank_Outline(Mat4.identity().times(Mat4.translation(-20, -20, 1.5)).times(Mat4.scale(1.5,1.5,1.5)).times(Mat4.rotation(Math.PI,0,0,1))),
             box: new Cube(),
             bush: new Grass(),
             p1_lc_1: new Cube(),
@@ -441,11 +526,12 @@ export class Game extends Scene {
                 
             powerup: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 1, color: hex_color("#FFFF00")}),
-
-            grass: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 1, color: hex_color("#7CFC00")})
+            
+            grass: new Material(new Gouraud_Shader(),
+                {ambient: 0.9, diffusivity: 1, color: hex_color("#539024")}),
+            
         }
-
+        this.grass_colors = [hex_color("#485042"), hex_color("#406842"), hex_color("#485042"), hex_color("#406842")];
         // changed camera angle to be more perspective - Nathan
         this.initial_camera_location = Mat4.look_at(vec3(0, -45, 45), vec3(0, -3, 0), vec3(0, 1, 0));
     }
@@ -658,7 +744,7 @@ export class Game extends Scene {
             for (let x = -3; x<3; x++){
                 var base = []
                 for (let i = 0; i<4; i++){
-                    base[i] = Mat4.translation(8*x, 8*y, 0).times(Mat4.scale(4.0,4.0,1.5)).times(Mat4.translation(1,1,0)).times(Mat4.rotation(i*Math.PI/2.0,0,0,1));
+                    base[i] = Mat4.translation(8*x, 8*y, 0).times(Mat4.scale(4.0,4.0,1.8)).times(Mat4.translation(1,1,0)).times(Mat4.rotation(i*Math.PI/2.0,0,0,1));
                 }
                 grasses[grass_index] = base;
                 grass_index++;
@@ -666,7 +752,7 @@ export class Game extends Scene {
         }
         for (let i = 0; i<this.grass_to_add.length; i++){
             for (let j = 0; j<4; j++){
-                this.shapes.bush.draw(context, program_state, grasses[this.grass_to_add[i]][j], this.materials.grass);
+                this.shapes.bush.draw(context, program_state, grasses[this.grass_to_add[i]][j], this.materials.grass.override({color:this.grass_colors[j]}));
             }
         }
 
@@ -830,6 +916,7 @@ export class Game extends Scene {
 
             //DRAW TANK 1
             this.shapes.p1.draw(context, program_state, this.shapes.p1.position, this.materials.tank1_mat);
+            this.shapes.p1_outline.draw(context, program_state, this.shapes.p1.position, this.white, "LINES");
 
             if(this.p1_life>2){
                 this.shapes.p1_lc_1.draw(context,program_state,balloon_position_1,this.materials.tank1_life_mat);
@@ -896,6 +983,7 @@ export class Game extends Scene {
 
             //DRAW TANK 2
             this.shapes.p2.draw(context, program_state, this.shapes.p2.position, this.materials.tank2_mat);
+            this.shapes.p2_outline.draw(context, program_state, this.shapes.p2.position, this.white, "LINES");
 
             if(this.p2_life>2){
                 this.shapes.p2_lc_1.draw(context,program_state,balloon_position_1,this.materials.tank2_life_mat);
